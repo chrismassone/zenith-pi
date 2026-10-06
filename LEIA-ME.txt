@@ -1,0 +1,22 @@
+ZENITH - Projeto Integrador I
+
+COMO USAR (3 passos)
+
+1. Extraia este ZIP dentro de Documentos. Vai criar/atualizar a pasta "zenith".
+   Se o Windows perguntar sobre arquivos ja existentes, escolha SUBSTITUIR.
+   Seu arquivo .env (com a senha) NAO e tocado.
+
+2. De dois cliques em  instalar.bat   (so na primeira vez)
+
+3. De dois cliques em  iniciar.bat    (abre o programa)
+
+Para conferir a conexao com o banco:  testar.bat
+
+SE NAO TIVER O ARQUIVO .env
+Copie ".env.example", renomeie a copia para ".env" e troque
+COLOQUE_A_SENHA_AQUI pela senha do usuario zenith_app do MySQL.
+
+FONTE (opcional)
+Sem a fonte Montserrat o programa usa a fonte do sistema.
+Para usar a Montserrat, copie Montserrat-Light.ttf, Montserrat-Regular.ttf
+e Montserrat-Bold.ttf para a pasta assets\fontes
