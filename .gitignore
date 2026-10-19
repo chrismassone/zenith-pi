@@ -1,3 +1,41 @@
+# ---- segredos: nunca versionar ----
 .env
+*.env
+.env.*
+!.env.example
+
+# ---- Python ----
 __pycache__/
+*.pyc
+*.pyo
 .venv/
+venv/
+env/
+
+# ---- editores ----
+.vscode/
+.idea/
+
+# ---- backups e dumps do banco (podem conter dados de produção) ----
+backups/
+dumps/
+*backup*.sql
+*_dump*.sql
+*.dump
+*.bak
+
+# ---- Power BI: arquivos temporários e cache ----
+~$*.pbix
+*.pbix.tmp
+*.pbip.tmp
+**/.pbi/cache.abf
+**/.pbi/localSettings.json
+**/.pbi/editorSettings.json
+*.SemanticModel/.pbi/cache.abf
+*.Report/.pbi/localSettings.json
+
+# ---- sistema ----
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.log
