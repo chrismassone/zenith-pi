@@ -1,38 +1,26 @@
-from datetime import date
-from interface.formatos import (formatar_cpf, formatar_telefone, formatar_cep,
-                                formatar_data, converter_data, montar_dados,
-                                distribuir_erros)
+from datetime import date, datetime, time
+from decimal import Decimal
 
-# Formulário fictício e válido, usado como base dos casos abaixo
-base = {
-    "nome_completo": "Paciente Ficticio", "cpf": "529.982.247-25",
-    "data_nasc": "10/05/1990", "telefone_paciente": "(11) 98765-4321",
-    "email_paciente": "", "cep_paciente": "03047-000",
-    "endereco_paciente": "Rua de Teste, 10", "bairro_paciente": "Mooca",
-    "cidade_paciente": "Sao Paulo", "origem_captacao": "Instagram",
-}
-dados_ok, erros_ok = montar_dados(base)
-_, erros_nome = montar_dados({**base, "nome_completo": "A" * 101})
-_, erros_bairro = montar_dados({**base, "bairro_paciente": "B" * 41})
-_, erros_origem = montar_dados({**base, "origem_captacao": "C" * 31})
-dados_data_ruim, erros_data_ruim = montar_dados({**base, "data_nasc": "31/02/2000"})
-dados_vazio, erros_vazio = montar_dados({**base, "data_nasc": ""})
-por_campo, gerais = distribuir_erros(["CPF inválido.", "Já existe um paciente com este CPF.",
-                                      "CEP inválido. Informe 8 dígitos.",
-                                      "Data de nascimento é obrigatório.",
-                                      "Mensagem sem campo."])
+from interface.formatos import (brl, formatar_cep, formatar_cnpj, formatar_cpf,
+                                formatar_data, formatar_data_hora, formatar_telefone,
+                                mes_curto, mes_extenso, numero, percentual)
+from validacoes.valores import (converter_data, converter_decimal, converter_hora,
+                                converter_inteiro)
 
 casos = [
     ("CPF formatado",               formatar_cpf("52998224725"), "529.982.247-25"),
     ("CPF já formatado",            formatar_cpf("529.982.247-25"), "529.982.247-25"),
     ("CPF fora do padrão intacto",  formatar_cpf("123"), "123"),
     ("CPF None",                    formatar_cpf(None), ""),
+    ("CNPJ formatado",              formatar_cnpj("11222333000181"), "11.222.333/0001-81"),
     ("Celular formatado",           formatar_telefone("11987654321"), "(11) 98765-4321"),
     ("Fixo formatado",              formatar_telefone("1133334444"), "(11) 3333-4444"),
     ("Telefone fora do padrão",     formatar_telefone("9876"), "9876"),
     ("CEP com zero à esquerda",     formatar_cep("03047000"), "03047-000"),
     ("Data para texto",             formatar_data(date(1990, 5, 10)), "10/05/1990"),
     ("Data None para texto",        formatar_data(None), ""),
+    ("Data e hora",                 formatar_data_hora(datetime(2026, 10, 16, 9, 5)),
+                                    "16/10/2026 09:05"),
     ("Converte dd/mm/aaaa",         converter_data("10/05/1990"), date(1990, 5, 10)),
     ("Converte só dígitos",         converter_data("10051990"), date(1990, 5, 10)),
     ("Converte com espaços",        converter_data(" 01/01/2000 "), date(2000, 1, 1)),
@@ -40,19 +28,24 @@ casos = [
     ("Recusa formato aaaa-mm-dd",   converter_data("1990-05-10"), None),
     ("Recusa ano curto",            converter_data("10/05/90"), None),
     ("Recusa vazio",                converter_data(""), None),
-    ("Formulário válido sem erros", erros_ok, {}),
-    ("Data convertida no envio",    dados_ok["data_nasc"], date(1990, 5, 10)),
-    ("Nome com 101 caracteres",     list(erros_nome), ["nome_completo"]),
-    ("Bairro com 41 caracteres",    list(erros_bairro), ["bairro_paciente"]),
-    ("Origem com 31 caracteres",    list(erros_origem), ["origem_captacao"]),
-    ("Data inexistente acusada",    list(erros_data_ruim), ["data_nasc"]),
-    ("Data inexistente vira None",  dados_data_ruim["data_nasc"], None),
-    ("Data vazia fica p/ repositório", (erros_vazio, dados_vazio["data_nasc"]), ({}, None)),
-    ("Erro de CPF vai ao campo",    por_campo.get("cpf"), "CPF inválido."),
-    ("Erro de CEP vai ao campo",    por_campo.get("cep_paciente"), "CEP inválido. Informe 8 dígitos."),
-    ("Erro de data vai ao campo",   "data_nasc" in por_campo, True),
-    ("Sobra vira mensagem geral",   gerais, ["Já existe um paciente com este CPF.",
-                                             "Mensagem sem campo."]),
+    ("Hora hh:mm",                  converter_hora("09:30"), time(9, 30)),
+    ("Hora sem dois-pontos",        converter_hora("1415"), time(14, 15)),
+    ("Recusa hora 25:00",           converter_hora("25:00"), None),
+    ("Dinheiro brasileiro",         converter_decimal("1.234,56"), Decimal("1234.56")),
+    ("Dinheiro com ponto decimal",  converter_decimal("1234.5"), Decimal("1234.50")),
+    ("Dinheiro com R$",             converter_decimal("R$ 90,00"), Decimal("90.00")),
+    ("Recusa texto como número",    converter_decimal("abc"), None),
+    ("Inteiro",                     converter_inteiro("150"), 150),
+    ("Recusa inteiro com vírgula",  converter_inteiro("1,5"), None),
+    ("R$ com milhar",               brl(Decimal("1234.5")), "R$ 1.234,50"),
+    ("R$ negativo",                 brl(Decimal("-50")), "-R$ 50,00"),
+    ("R$ vazio",                    brl(None), "—"),
+    ("Número inteiro sem ,00",      numero(Decimal("50.00")), "50"),
+    ("Número com casas",            numero(Decimal("2.5")), "2,50"),
+    ("Percentual",                  percentual(Decimal("0.9071")), "90,7%"),
+    ("Percentual vazio",            percentual(None), "—"),
+    ("Mês por extenso",             mes_extenso("2026-09"), "Setembro de 2026"),
+    ("Mês curto",                   mes_curto("2026-03"), "mar/26"),
 ]
 
 falhas = 0

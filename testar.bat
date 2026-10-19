@@ -1,15 +1,25 @@
 @echo off
 cd /d "%~dp0"
-echo === Teste das validacoes ===
+echo === Testes de logica (sem banco) ===
 python teste_validacoes.py
-echo.
-echo === Teste da formatacao da tela de pacientes ===
 python teste_formatos.py
+python teste_login.py
 echo.
-echo === Teste da conexao com o banco ===
+echo === Banco principal zenith (somente leitura) ===
 python teste_conexao.py
+python popular_validar.py
+python consultas_executar.py
+python teste_dashboard.py
 echo.
-echo === Teste do cadastro de pacientes ===
+echo === Banco de TESTE zenith_teste (grava e apaga) ===
+python popular_validar.py --teste
 python teste_paciente.py
+python teste_servicos.py
+python teste_retorno_agenda.py
+echo.
+echo === Interface (abre a janela; nao mexa no mouse/teclado) ===
+python teste_rolagem.py
+python teste_fluxo_pacientes.py
+python teste_fluxo_interface.py
 echo.
 pause

@@ -1,52 +1,51 @@
-from datetime import date
-from database.conexao import conectar
-from repositorios import paciente as repo
+import banco_teste
+banco_teste.usar()  # grava só no banco zenith_teste
 
+from repositorios.base import transacao
+from servicos import pacientes
+from servicos.erros import DadosInvalidos
+from servicos.sessao import Sessao
+
+S = Sessao(dict(id_usuario=0, nome="Teste", email="t@exemplo.invalid", perfil="Gerente"))
 dados = {
     "nome_completo": "Paciente de Teste",
-    "cpf": "529.982.247-25",          # CPF de exemplo, matematicamente válido
-    "data_nasc": date(1990, 5, 10),
+    "cpf": "111.444.777-35",          # CPF de exemplo, válido só pelo algoritmo
+    "data_nasc": "10/05/1990",
     "telefone_paciente": "(11) 98765-4321",
     "email_paciente": "",
     "cep_paciente": "03047-000",
     "endereco_paciente": "Rua de Teste, 10",
     "bairro_paciente": "Mooca",
-    "cidade_paciente": "Sao Paulo",
+    "cidade_paciente": "São Paulo",
     "origem_captacao": "Instagram",
 }
 
 id_teste = None
 try:
-    id_teste = repo.inserir(dados)
+    id_teste = pacientes.salvar(S, dados)
     print("1. Inserido, id =", id_teste)
-
-    print("2. Buscado:", repo.buscar_por_id(id_teste)["nome_completo"])
-    print("3. Listar 'Teste':", len(repo.listar("Teste")), "resultado(s)")
-
-    dados["telefone_paciente"] = "(11) 91234-5678"
-    print("4. Atualizado:", repo.atualizar(id_teste, dados))
-
+    print("2. Buscado:", pacientes.obter(S, id_teste)["nome_completo"])
+    print("3. Listar 'Paciente de Teste':", len(pacientes.listar(S, "Paciente de Teste")),
+          "resultado(s)")
+    pacientes.salvar(S, {**dados, "telefone_paciente": "(11) 91234-5678"}, id_teste)
+    print("4. Atualizado:", pacientes.obter(S, id_teste)["telefone_paciente"])
     try:
-        repo.inserir(dados)
+        pacientes.salvar(S, dados)
         print("5. FALHA: aceitou CPF duplicado")
-    except repo.DadosInvalidos as e:
-        print("5. CPF duplicado recusado:", e.erros)
-
+    except DadosInvalidos as e:
+        print("5. CPF duplicado recusado:", list(e.erros.values()))
     try:
-        repo.inserir({**dados, "cpf": "11111111111"})
+        pacientes.salvar(S, {**dados, "cpf": "11111111111"})
         print("6. FALHA: aceitou CPF inválido")
-    except repo.DadosInvalidos as e:
-        print("6. CPF inválido recusado:", e.erros)
-
-    repo.inativar(id_teste)
+    except DadosInvalidos as e:
+        print("6. CPF inválido recusado:", list(e.erros.values()))
+    pacientes.definir_ativo(S, id_teste, False)
     print("7. Inativado. Aparece na lista de ativos?",
-          len(repo.listar("Teste")) > 0, "(esperado: False)")
+          len(pacientes.listar(S, "Paciente de Teste")) > 0, "(esperado: False)")
     print("   Aparece com inativos?",
-          len(repo.listar("Teste", incluir_inativos=True)) > 0, "(esperado: True)")
+          len(pacientes.listar(S, "Paciente de Teste", True)) > 0, "(esperado: True)")
 finally:
     if id_teste:
-        conn = conectar()
-        conn.cursor().execute("DELETE FROM paciente WHERE id_paciente = %s", (id_teste,))
-        conn.commit()
-        conn.close()
+        with transacao() as cur:
+            cur.execute("DELETE FROM paciente WHERE id_paciente = %s", (id_teste,))
         print("Registro de teste removido.")
