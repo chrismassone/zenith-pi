@@ -40,3 +40,16 @@ def validar_telefone(telefone):
     if len(digitos) == 11 and digitos[2] != "9":  # celular começa com 9
         return False
     return True
+
+
+def validar_cnpj(cnpj):
+    """Retorna True se o CNPJ tem 14 dígitos e os dígitos verificadores batem."""
+    cnpj = somente_digitos(cnpj)
+    if len(cnpj) != 14 or cnpj == cnpj[0] * 14:
+        return False
+    for pesos in ([5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],
+                  [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]):
+        resto = sum(int(d) * p for d, p in zip(cnpj, pesos)) % 11
+        if int(cnpj[len(pesos)]) != (0 if resto < 2 else 11 - resto):
+            return False
+    return True

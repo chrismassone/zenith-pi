@@ -2,3 +2,5 @@ mysql-connector-python
 python-dotenv
 customtkinter
 pillow
+bcrypt
+matplotlib

@@ -1,26 +1,14 @@
-"""Lógica pura da tela de pacientes: formatação para exibição, conversão
-de data e checagens do formulário. Não importa nada gráfico, para poder
-ser testada sem abrir janela (ver teste_formatos.py)."""
+"""Formatação de valores para exibição na interface. Funções puras, sem
+nada gráfico, testadas em teste_formatos.py. A validação dos dados fica
+na camada de serviços (servicos/)."""
 from datetime import date, datetime
+from decimal import Decimal
 import re
 
-# Campos do formulário: (chave no repositório, rótulo, limite de caracteres)
-# Limites iguais aos do banco (zenith_banco.sql, tabela paciente).
-# Limite None = campo com formato próprio, conferido pelo repositório.
-CAMPOS = [
-    ("nome_completo", "Nome completo", 100),
-    ("cpf", "CPF", None),
-    ("data_nasc", "Data de nascimento", None),
-    ("telefone_paciente", "Telefone", None),
-    ("email_paciente", "E-mail", 100),
-    ("cep_paciente", "CEP", None),
-    ("endereco_paciente", "Endereço", 100),
-    ("bairro_paciente", "Bairro", 40),
-    ("cidade_paciente", "Cidade", 40),
-    ("origem_captacao", "Origem da captação", 30),
-]
-ROTULOS = {chave: rotulo for chave, rotulo, _ in CAMPOS}
-SUGESTOES_ORIGEM = ["Instagram", "Indicação"]
+from validacoes.valores import converter_data  # noqa: F401  (reexportado para as telas)
+
+MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto",
+         "setembro", "outubro", "novembro", "dezembro"]
 
 
 def _digitos(texto):
@@ -33,6 +21,13 @@ def formatar_cpf(cpf):
     if len(d) != 11:
         return cpf or ""
     return f"{d[:3]}.{d[3:6]}.{d[6:9]}-{d[9:]}"
+
+
+def formatar_cnpj(cnpj):
+    d = _digitos(cnpj)
+    if len(d) != 14:
+        return cnpj or ""
+    return f"{d[:2]}.{d[2:5]}.{d[5:8]}/{d[8:12]}-{d[12:]}"
 
 
 def formatar_telefone(telefone):
@@ -55,56 +50,51 @@ def formatar_cep(cep):
 
 
 def formatar_data(valor):
-    """date -> 'dd/mm/aaaa'. None -> ''."""
-    return valor.strftime("%d/%m/%Y") if isinstance(valor, date) else ""
+    """date ou datetime -> 'dd/mm/aaaa'. None -> ''."""
+    return valor.strftime("%d/%m/%Y") if isinstance(valor, (date, datetime)) else ""
 
 
-def converter_data(texto):
-    """'dd/mm/aaaa' (ou 'ddmmaaaa') -> date. Retorna None se for inválida."""
-    texto = (texto or "").strip()
-    if re.fullmatch(r"\d{8}", texto):
-        texto = f"{texto[:2]}/{texto[2:4]}/{texto[4:]}"
-    if not re.fullmatch(r"\d{2}/\d{2}/\d{4}", texto):
-        return None
-    try:
-        return datetime.strptime(texto, "%d/%m/%Y").date()
-    except ValueError:  # ex.: 31/02/2000
-        return None
+def formatar_data_hora(valor):
+    return valor.strftime("%d/%m/%Y %H:%M") if isinstance(valor, datetime) else ""
 
 
-def montar_dados(valores):
-    """Recebe os textos digitados {chave: texto} e devolve (dados, erros).
-
-    dados: dicionário pronto para repositorios.paciente.inserir/atualizar.
-    erros: {chave: mensagem} com o que o repositório não confere
-    (tamanho máximo e formato da data). O resto (obrigatórios, CPF,
-    telefone, CEP, e-mail, duplicidade) é conferido pelo repositório."""
-    dados, erros = {}, {}
-    for chave, rotulo, limite in CAMPOS:
-        texto = (valores.get(chave) or "").strip()
-        if limite and len(texto) > limite:
-            erros[chave] = f"{rotulo}: máximo de {limite} caracteres."
-        dados[chave] = texto
-
-    texto_data = dados["data_nasc"]
-    dados["data_nasc"] = converter_data(texto_data)
-    if texto_data and dados["data_nasc"] is None:
-        erros["data_nasc"] = "Data de nascimento inválida. Use dd/mm/aaaa."
-    return dados, erros
+def formatar_hora(valor):
+    return valor.strftime("%H:%M") if valor else ""
 
 
-def distribuir_erros(erros):
-    """Associa cada mensagem de DadosInvalidos.erros ao campo a que se
-    refere. Devolve ({chave: mensagem}, [mensagens sem campo])."""
-    por_campo, gerais = {}, []
-    # rótulos mais longos primeiro ("CEP" não pode capturar outro rótulo)
-    ordem = sorted(ROTULOS.items(), key=lambda par: -len(par[1]))
-    for msg in erros:
-        chave = next((c for c, r in ordem if msg.startswith(r)), None)
-        if chave is None and "CPF" in msg:  # "Já existe um paciente com este CPF."
-            chave = "cpf"
-        if chave and chave not in por_campo:
-            por_campo[chave] = msg
-        else:
-            gerais.append(msg)
-    return por_campo, gerais
+def numero(valor, casas=2):
+    """Decimal -> '1.234,50' (padrão brasileiro). Inteiros sem ',00'."""
+    if valor is None:
+        return ""
+    texto = f"{Decimal(valor):,.{casas}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    if casas and texto.endswith("," + "0" * casas):
+        texto = texto[:-(casas + 1)]
+    return texto
+
+
+def brl(valor):
+    """Decimal -> 'R$ 1.234,56'. Negativo: '-R$ 50,00'. None -> '—'."""
+    if valor is None:
+        return "—"
+    v = Decimal(valor)
+    texto = f"{abs(v):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return f"-R$ {texto}" if v < 0 else f"R$ {texto}"
+
+
+def percentual(razao, casas=1):
+    """0.9071 -> '90,7%'. None -> '—'."""
+    if razao is None:
+        return "—"
+    return f"{Decimal(razao) * 100:.{casas}f}".replace(".", ",") + "%"
+
+
+def mes_extenso(ano_mes):
+    """'2026-09' -> 'Setembro de 2026'."""
+    ano, mes = ano_mes.split("-")
+    return f"{MESES[int(mes) - 1].capitalize()} de {ano}"
+
+
+def mes_curto(ano_mes):
+    """'2026-09' -> 'set/26' (eixos de gráfico)."""
+    ano, mes = ano_mes.split("-")
+    return f"{MESES[int(mes) - 1][:3]}/{ano[2:]}"
