@@ -5,7 +5,7 @@
 -- SUPOSICAO: precos, locacao, retornos, quantidades padrao e valores
 -- financeiros sao ficticios, a confirmar com a cliente.
 -- Nao edite a mao: altere popular_gerar.py e gere de novo.
--- Execute DEPOIS de zenith_banco.sql, com o banco vazio.
+-- Execute DEPOIS de 1_criacao.sql, com o banco vazio.
 -- ============================================================
 SET NAMES utf8mb4;
 USE zenith;

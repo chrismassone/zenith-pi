@@ -1,21 +1,21 @@
 -- ============================================================
 -- ZENITH - SCRIPT COMPLETO (gerado por gerar_sql_completo.py em
--- 19/10/2026 20:49; nao edite a mao)
+-- 19/10/2026 21:31; nao edite a mao)
 --
 -- ############################################################
 -- ##  AVISO: ESTE SCRIPT APAGA E RECRIA O SCHEMA `zenith`.  ##
 -- ##  TODOS OS DADOS ATUAIS DE `zenith` SERAO PERDIDOS.      ##
--- ##  FACA O BACKUP ANTES (mysqldump; docs/entrega2.md). ##
+-- ##  FACA O BACKUP ANTES (mysqldump; ver README.md).      ##
 -- ############################################################
 --
 -- O que e: estrutura + dados ficticios + consultas do Zenith, em um
 -- unico arquivo, para rodar de ponta a ponta no MySQL Workbench como root.
 -- Ordem:
---   1. Criacao (zenith_banco.sql sem a secao de permissoes): tabelas,
+--   1. Criacao (1_criacao.sql sem a secao de permissoes): tabelas,
 --      indices, gatilhos (com DELIMITER) e views.
---   2. Populacao (zenith_populacao.sql): dados 100% ficticios, numa
+--   2. Populacao (2_populacao.sql): dados 100% ficticios, numa
 --      transacao (START TRANSACTION ... COMMIT).
---   3. Consultas (zenith_consultas.sql): 20 consultas de conferencia.
+--   3. Consultas (3_consultas.sql): 20 consultas de conferencia.
 --   4. COMMIT final.
 --
 -- Contagens finais esperadas por tabela:
@@ -37,7 +37,7 @@
 -- Os USUARIOS DO SISTEMA NAO estao neste script. Depois de rodar, crie o
 -- primeiro Gerente com:  python criar_usuario.py
 -- (a senha e digitada sem aparecer e guardada so como hash bcrypt).
--- As permissoes do MySQL estao a parte, em zenith_permissoes.sql.
+-- As permissoes do MySQL estao a parte, em permissoes.sql.
 -- ============================================================
 
 -- ====================== 1. CRIACAO ======================
@@ -47,23 +47,9 @@
 -- SGBD: MySQL 8.0.16+ (necessario para o CHECK ser aplicado)
 -- Versao do script: 2.0
 --
--- O QUE MUDOU EM RELACAO A 1.0
---   * movimentacao_estoque foi substituida por duas entidades associativas:
---       compra  (Fornecedor x Insumo)  -> entrada de estoque, N:M
---       consumo (Insumo x Atendimento) -> saida de estoque (avulsa se sem atendimento)
---   * procedimento_insumo (Procedimento x Insumo): quanto cada procedimento
---     consome de cada insumo (quantidade padrao SUGERIDA, editavel).
---   * insumo perdeu fornecedor, lote, validade, preco e estoque atual
---     (lote/validade/preco ficam na compra; estoque e calculado por view).
---   * atendimento perdeu valor_total (calculado por view) e ganhou
---     forma_pagamento e desconto.
---   * Novas: usuario, anamnese, lancamento.
---   * criado_em / atualizado_em, exclusao logica (ativo), utf8mb4.
---   * Views para o aplicativo e para o Power BI.
---
 -- ATENCAO: este script APAGA o banco zenith e o recria vazio.
--- Faca o backup antes (ver docs/modelo_dados.md, secao "Backup").
--- Os dados sao carregados depois por zenith_populacao.sql.
+-- Faca o backup antes.
+-- Os dados sao carregados depois por 2_populacao.sql.
 -- Execute como root no MySQL Workbench.
 -- ============================================================
 
@@ -684,7 +670,7 @@ GROUP BY p.id_procedimento, p.nome_procedimento, p.preco_tabela;
 -- SUPOSICAO: precos, locacao, retornos, quantidades padrao e valores
 -- financeiros sao ficticios, a confirmar com a cliente.
 -- Nao edite a mao: altere popular_gerar.py e gere de novo.
--- Execute DEPOIS de zenith_banco.sql, com o banco vazio.
+-- Execute DEPOIS de 1_criacao.sql, com o banco vazio.
 -- ============================================================
 SET NAMES utf8mb4;
 USE zenith_teste;

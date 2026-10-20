@@ -3,8 +3,6 @@
 -- Execute como root, DEPOIS de zenith_completo.sql.
 -- Troque TROQUE_ESTA_SENHA pela senha de cada usuario. NUNCA grave senhas reais
 -- neste arquivo nem no Git: a senha do zenith_app fica so no arquivo .env.
--- Fonte: secao 6 de zenith_banco.sql, LEIA-ME.txt / entrega e
--- docs/powerbi_views.md.
 -- ============================================================
 
 -- ----- zenith_app: usuario do aplicativo -----

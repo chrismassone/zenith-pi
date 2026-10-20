@@ -4,23 +4,9 @@
 -- SGBD: MySQL 8.0.16+ (necessario para o CHECK ser aplicado)
 -- Versao do script: 2.0
 --
--- O QUE MUDOU EM RELACAO A 1.0
---   * movimentacao_estoque foi substituida por duas entidades associativas:
---       compra  (Fornecedor x Insumo)  -> entrada de estoque, N:M
---       consumo (Insumo x Atendimento) -> saida de estoque (avulsa se sem atendimento)
---   * procedimento_insumo (Procedimento x Insumo): quanto cada procedimento
---     consome de cada insumo (quantidade padrao SUGERIDA, editavel).
---   * insumo perdeu fornecedor, lote, validade, preco e estoque atual
---     (lote/validade/preco ficam na compra; estoque e calculado por view).
---   * atendimento perdeu valor_total (calculado por view) e ganhou
---     forma_pagamento e desconto.
---   * Novas: usuario, anamnese, lancamento.
---   * criado_em / atualizado_em, exclusao logica (ativo), utf8mb4.
---   * Views para o aplicativo e para o Power BI.
---
 -- ATENCAO: este script APAGA o banco zenith e o recria vazio.
--- Faca o backup antes (ver docs/modelo_dados.md, secao "Backup").
--- Os dados sao carregados depois por zenith_populacao.sql.
+-- Faca o backup antes.
+-- Os dados sao carregados depois por 2_populacao.sql.
 -- Execute como root no MySQL Workbench.
 -- ============================================================
 
