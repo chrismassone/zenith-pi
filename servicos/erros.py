@@ -1,20 +1,17 @@
-"""Exceções da camada de serviços. Todas trazem mensagem clara em português,
-pronta para mostrar ao usuário (nunca texto técnico)."""
+"""Exceções com mensagens prontas para o usuário."""
 
 MSG_BANCO = ("Não foi possível acessar o banco de dados. "
              "Verifique se o MySQL está ligado e tente novamente.")
 
 
 class ErroNegocio(Exception):
-    """Base: .mensagem é o texto para o usuário."""
-
     def __init__(self, mensagem):
         self.mensagem = mensagem
         super().__init__(mensagem)
 
 
 class DadosInvalidos(ErroNegocio):
-    """Dados reprovados. .erros = {campo: mensagem}; campo None = erro geral."""
+    """.erros = {campo: mensagem}; campo None é erro geral."""
 
     def __init__(self, erros):
         self.erros = dict(erros)
@@ -50,5 +47,4 @@ class BancoIndisponivel(ErroNegocio):
 
 
 def obrigatorio(rotulo):
-    """Mensagem padrão de campo obrigatório."""
     return f"O campo {rotulo} é obrigatório."

@@ -1,7 +1,4 @@
-"""Tela Atendimentos: agenda e histórico com filtros; formulário com linhas
-de procedimento, desconto, forma de pagamento e total. Ao salvar como
-Realizado, mostra os insumos sugeridos com a quantidade EDITÁVEL antes de
-registrar o consumo."""
+"""Tela de atendimentos."""
 from datetime import date
 import tkinter as tk
 
@@ -33,7 +30,7 @@ class TelaAtendimentos(TelaBase):
             self.unidades = []
         self.mostrar_lista()
 
-    # ================= lista =================
+    # lista
     def mostrar_lista(self, aviso=""):
         self.limpar()
         self.cabecalho.trocar(self.TITULO, self.SUBTITULO)
@@ -52,7 +49,7 @@ class TelaAtendimentos(TelaBase):
         self.f_status = Seletor(barra, [(s, s) for s in srv.STATUS], vazio="Todas as situações",
                                 width=Medida.FILTRO_LARGURA, comando=lambda _v: self.carregar())
         self.f_status.grid(row=0, column=2, padx=(Espaco.M, 0))
-        # segunda linha: período (a primeira não comporta tudo em telas de 1280 px)
+        # período na segunda linha (não cabe tudo em 1280 px)
         self.f_de = entrada(barra, width=Medida.FILTRO_LARGURA, placeholder_text="De dd/mm/aaaa")
         self.f_de.grid(row=1, column=0, pady=(Espaco.S, 0), sticky="w")
         self.f_ate = entrada(barra, width=Medida.FILTRO_LARGURA,
@@ -105,7 +102,7 @@ class TelaAtendimentos(TelaBase):
              a["nome_clinica"].replace("Unidade ", ""), (a["status"], COR_STATUS[a["status"]]),
              brl(a["valor_total"]) if a["qtd_itens"] else "—"] for a in linhas], linhas)
 
-    # ================= formulário =================
+    # formulário
     def mostrar_formulario(self, id_atendimento=None):
         self.limpar()
         self.id_atual = id_atendimento
@@ -190,7 +187,7 @@ class TelaAtendimentos(TelaBase):
         if a and a["qtd_consumos"]:
             self.campos["status"].mostrar_dica("Consumo de insumos já registrado.")
 
-        # ---- linhas de procedimento ----
+        # linhas de procedimento
         itens = Cartao(corpo)
         itens.grid(row=1, column=0, sticky="ew", pady=(Espaco.L, 0))
         caixa = ctk.CTkFrame(itens, fg_color="transparent")
@@ -247,7 +244,6 @@ class TelaAtendimentos(TelaBase):
         valor = entrada(linha, width=Medida.QTD_LARGURA, placeholder_text="0,00")
 
         def escolheu(id_proc):
-            # preço de tabela preenchido; a profissional pode alterar
             if id_proc in precos:
                 valor.delete(0, "end")
                 valor.insert(0, numero(precos[id_proc]).replace(".", ""))
@@ -297,7 +293,7 @@ class TelaAtendimentos(TelaBase):
         texto += f"   Valor total {brl(max(soma - desconto, 0))}"
         self.rotulo_total.configure(text=texto)
 
-    # ================= salvar =================
+    # salvar
     def _valores(self):
         return {k: c.valor() for k, c in self.campos.items()}
 
@@ -319,7 +315,6 @@ class TelaAtendimentos(TelaBase):
         if precisa is FALHOU:
             return
         if precisa:
-            # confere o restante do formulário antes de abrir a confirmação de insumos
             sugestao = self.chamar(srv.sugerir_consumo, linhas, ao_invalido=self._invalido)
             if sugestao is FALHOU:
                 return
@@ -341,8 +336,7 @@ class TelaAtendimentos(TelaBase):
 
 
 class DialogoConsumo(AgendaSegura, ctk.CTkToplevel):
-    """Confirmação dos insumos usados: quantidade sugerida editável, saldo
-    atual ao lado. Devolve [{'id_insumo', 'quantidade', 'nome_insumo'}] ou None."""
+    """Confirmação dos insumos usados, com a quantidade sugerida editável."""
 
     def __init__(self, master, sugestao):
         self.janela = master.winfo_toplevel()
@@ -404,7 +398,6 @@ class DialogoConsumo(AgendaSegura, ctk.CTkToplevel):
             self.agendar(20, self._prender)
 
     def confirmar(self):
-        # a conferência (número válido e saldo) é feita pelo serviço ao salvar
         self.resultado = [dict(id_insumo=s["id_insumo"], quantidade=e.get(),
                                nome_insumo=s["nome_insumo"])
                           for s, e in zip(self.sugestao, self.entradas)]

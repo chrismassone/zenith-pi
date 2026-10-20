@@ -1,5 +1,3 @@
-"""SQL de atendimento, itens (atendimento_procedimento) e o consumo de
-insumos gerado ao realizar o atendimento. Sem regra de negócio."""
 from repositorios.base import consultar, transacao
 
 
@@ -54,7 +52,6 @@ def buscar(id_atendimento):
 
 
 def sugestao_insumos(ids_procedimento):
-    """Insumos padrão dos procedimentos, com o saldo atual de cada um."""
     if not ids_procedimento:
         return []
     marcas = ", ".join(["%s"] * len(ids_procedimento))
@@ -77,9 +74,7 @@ def saldos(ids_insumo):
 
 
 def salvar(id_atendimento, d, itens, consumos=()):
-    """Grava cabeçalho, itens e (opcionalmente) consumos numa transação só.
-    itens = [dict(id_procedimento, quantidade_aplicada, regiao_aplicada, valor_cobrado)]
-    consumos = [(id_insumo, quantidade)] já conferidos pelo serviço."""
+    """Grava atendimento, itens e consumos numa única transação."""
     with transacao() as cur:
         if id_atendimento is None:
             cur.execute("""INSERT INTO atendimento (id_profissional, id_paciente, id_unidade,
@@ -95,7 +90,7 @@ def salvar(id_atendimento, d, itens, consumos=()):
                                   forma_pagamento = %(forma_pagamento)s,
                                   desconto = %(desconto)s, observacao = %(observacao)s
                             WHERE id_atendimento = %(_id)s""", {**d, "_id": id_atendimento})
-            # itens são substituídos: exige DELETE do zenith_app nesta tabela de detalhe
+            # os itens são regravados (DELETE liberado só nesta tabela de detalhe)
             cur.execute("DELETE FROM atendimento_procedimento WHERE id_atendimento = %s",
                         (id_atendimento,))
         for it in itens:

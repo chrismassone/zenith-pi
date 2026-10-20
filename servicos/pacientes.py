@@ -1,4 +1,4 @@
-"""Regras de pacientes, anamnese e histórico."""
+"""Pacientes, anamnese e histórico."""
 from datetime import date
 
 from repositorios import paciente as repo
@@ -53,7 +53,6 @@ def obter(sessao, id_paciente):
 
 
 def salvar(sessao, dados, id_paciente=None):
-    """Cadastra (sem id) ou altera. Devolve o id do paciente."""
     sessao.exigir("pacientes", editar=True)
     d = validar_ou_falhar(dados, CAMPOS, _data_futura)
     with banco(DUPLICADOS):
@@ -64,13 +63,13 @@ def salvar(sessao, dados, id_paciente=None):
 
 
 def definir_ativo(sessao, id_paciente, ativo):
-    """Inativar mantém todo o histórico; não existe exclusão de paciente."""
+    """Pacientes não são excluídos, só inativados."""
     sessao.exigir("pacientes", editar=True)
     with banco():
         repo.definir_ativo(id_paciente, ativo)
 
 
-# ---------- anamnese ----------
+# anamnese
 def listar_anamneses(sessao, id_paciente):
     sessao.exigir("anamnese")
     with banco():
@@ -78,8 +77,7 @@ def listar_anamneses(sessao, id_paciente):
 
 
 def salvar_anamnese(sessao, id_paciente, dados, id_anamnese=None, id_profissional=None):
-    """A anamnese fica registrada com a profissional da sessão. Um Gerente
-    sem vínculo de profissional informa a profissional (id_profissional)."""
+    """Registra com a profissional da sessão ou a informada (Gerente)."""
     sessao.exigir("anamnese", editar=True)
     d = validar_ou_falhar(dados, CAMPOS_ANAMNESE)
     with banco():
@@ -92,7 +90,7 @@ def salvar_anamnese(sessao, id_paciente, dados, id_anamnese=None, id_profissiona
         return repo.inserir_anamnese(id_paciente, prof, d)
 
 
-# ---------- histórico ----------
+# histórico
 def historico(sessao, id_paciente):
     sessao.exigir("pacientes")
     with banco():

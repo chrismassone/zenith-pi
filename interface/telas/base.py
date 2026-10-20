@@ -1,9 +1,4 @@
-"""Base das telas: estrutura comum (cabeçalho, conteúdo, rodapé fixo),
-tratamento de erros e um cadastro genérico com lista e formulário.
-
-As telas não têm regra de negócio: chamam funções de servicos/ e mostram
-o resultado. Erros de negócio chegam como exceções com mensagem pronta.
-"""
+"""Base das telas e cadastro genérico (lista + formulário)."""
 import traceback
 
 import customtkinter as ctk
@@ -14,19 +9,17 @@ from interface.componentes import (AgendaSegura, BotaoPrincipal, Cabecalho, Camp
 from interface.tema import Cor, Espaco, Fonte, Medida
 from servicos.erros import DadosInvalidos, ErroNegocio, SessaoExpirada
 
-FALHOU = object()   # resultado de chamar() quando o erro já foi mostrado
+FALHOU = object()
 MSG_INESPERADO = "Ocorreu um erro inesperado. Tente novamente."
 
 
 class TelaBase(AgendaSegura, ctk.CTkFrame):
-    """Cabeçalho no topo, conteúdo no meio (expande) e um rodapé opcional
-    fixo embaixo (botões Salvar/Cancelar nunca rolam para fora da tela)."""
+    """Cabeçalho, conteúdo e rodapé fixo."""
 
     MODULO = None
 
     def __init__(self, master, app, titulo, subtitulo="", cabecalho=None):
-        """cabecalho: usado quando a tela fica embutida em outra (numa aba);
-        ela então usa o cabeçalho da tela de fora e não tem margens próprias."""
+        """cabecalho: usado quando a tela fica dentro de outra (numa aba)."""
         super().__init__(master, fg_color=Cor.FUNDO, corner_radius=0)
         self.app = app
         self.sessao = app.sessao
@@ -51,7 +44,7 @@ class TelaBase(AgendaSegura, ctk.CTkFrame):
         self.cancelar_agendamentos()
         super().destroy()
 
-    # ----- estrutura -----
+    # estrutura
     def limpar(self):
         for w in self.conteudo.winfo_children():
             w.destroy()
@@ -71,10 +64,9 @@ class TelaBase(AgendaSegura, ctk.CTkFrame):
     def pode_editar(self):
         return self.sessao.pode_editar(self.MODULO)
 
-    # ----- chamadas aos serviços -----
+    # chamadas aos serviços
     def chamar(self, funcao, *args, ao_invalido=None, **kwargs):
-        """Chama funcao(sessao, *args). Em erro, mostra a mensagem e devolve
-        FALHOU. DadosInvalidos vai para ao_invalido(erro), se informado."""
+        """Chama funcao(sessao, ...); se der erro, mostra a mensagem e devolve FALHOU."""
         try:
             return funcao(self.sessao, *args, **kwargs)
         except SessaoExpirada:
@@ -89,7 +81,7 @@ class TelaBase(AgendaSegura, ctk.CTkFrame):
         except ErroNegocio as erro:
             self.erro(erro.mensagem)
             return FALHOU
-        except Exception:  # noqa: BLE001 - o usuário nunca vê o erro técnico
+        except Exception:  # noqa: BLE001 - o usuário não vê o erro técnico
             traceback.print_exc()
             self.erro(MSG_INESPERADO)
             return FALHOU
@@ -104,9 +96,7 @@ class TelaBase(AgendaSegura, ctk.CTkFrame):
 
 
 class TelaCadastro(TelaBase):
-    """Lista com busca, filtro de inativos, ações por linha e formulário de
-    cadastro/edição na mesma tela. As subclasses descrevem os campos e
-    ligam as funções do serviço."""
+    """Lista com busca e inativos, e formulário na mesma tela."""
 
     TITULO = SUBTITULO = ""
     TEXTO_NOVO = "Novo"
@@ -130,7 +120,7 @@ class TelaCadastro(TelaBase):
         self.registro = None
         self.mostrar_lista()
 
-    # ----- ganchos para as subclasses -----
+    # ganchos para as subclasses
     def listar(self, busca, inativos):
         raise NotImplementedError
 
@@ -148,20 +138,19 @@ class TelaCadastro(TelaBase):
         raise NotImplementedError
 
     def opcoes(self, chave):
-        """Opções [(valor, rótulo)] de campos do tipo seletor."""
         return []
 
     def secao_extra(self, corpo, linha_grade):
-        """Seções adicionais do formulário (abaixo dos campos)."""
+        pass
 
     def dados_extra(self):
         return {}
 
     def filtros_extra(self, barra, coluna):
-        """Controles adicionais na barra de ferramentas. Devolve a próxima coluna."""
+        """Controles extras na barra; devolve a próxima coluna."""
         return coluna
 
-    # ----- lista -----
+    # lista
     def mostrar_lista(self, aviso=""):
         self.limpar()
         self.cabecalho.trocar(self.TITULO, self.SUBTITULO)
@@ -237,7 +226,7 @@ class TelaCadastro(TelaBase):
         self.carregar()
         self.sucesso("Registro reativado." if ativo else "Registro inativado.")
 
-    # ----- formulário -----
+    # formulário
     def mostrar_formulario(self, r=None):
         self.limpar()
         self.registro = r
@@ -248,7 +237,6 @@ class TelaCadastro(TelaBase):
         self.montar_campos(self.conteudo, 0, r)
 
     def montar_campos(self, master, linha_grade, r):
-        """Corpo rolável com o cartão de campos em duas colunas e as seções extras."""
         leitura = not self.pode_editar
         self.corpo = caixa_rolagem(master)
         self.corpo.grid(row=linha_grade, column=0, sticky="nsew")
@@ -306,7 +294,7 @@ class TelaCadastro(TelaBase):
         self.erros_extra(erros)
 
     def erros_extra(self, erros):
-        """Para seções extras exibirem os erros delas."""
+        pass
 
     def _salvar(self):
         dados = {**self.valores(), **self.dados_extra()}

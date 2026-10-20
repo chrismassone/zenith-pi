@@ -1,5 +1,4 @@
-"""Início, Financeiro e Dashboard. Todos os números vêm das views vw_* (as
-mesmas do Power BI); aqui só se soma e se divide por cima delas."""
+"""Início, Financeiro e Dashboard, sempre a partir das views vw_*."""
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -14,7 +13,7 @@ def _razao(numerador, denominador):
     return (Decimal(numerador) / Decimal(denominador)) if denominador else None
 
 
-# ---------- Início ----------
+# início
 def inicio(sessao, hoje=None):
     sessao.exigir("inicio")
     hoje = hoje or date.today()
@@ -26,7 +25,7 @@ def inicio(sessao, hoje=None):
     return r
 
 
-# ---------- Financeiro ----------
+# financeiro
 def meses(sessao):
     sessao.tocar()
     with banco():
@@ -72,11 +71,9 @@ def salvar_lancamento(sessao, dados, id_=None):
         return id_
 
 
-# ---------- Dashboard ----------
+# dashboard
 def dashboard(sessao, ano_ini, ano_fim, id_unidade=None, id_procedimento=None):
-    """Todos os visuais com os mesmos filtros. Com filtro de procedimento, o
-    faturamento vem de vw_dash_procedimento (a única view com procedimento);
-    custos de locação e despesas não dependem de procedimento."""
+    """Indicadores com os filtros aplicados. Com procedimento, o faturamento vem de vw_dash_procedimento."""
     sessao.exigir("dashboard")
     with banco():
         unidades = repo.por_unidade(ano_ini, ano_fim, id_unidade)

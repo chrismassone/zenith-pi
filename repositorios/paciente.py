@@ -1,5 +1,3 @@
-"""SQL de paciente, anamnese e histórico. Sem regra de negócio
-(ver servicos/pacientes.py)."""
 from repositorios.base import consultar, executar
 from validacoes.documentos import somente_digitos
 
@@ -27,7 +25,7 @@ def buscar_por_id(id_paciente):
 
 
 def listar(busca="", incluir_inativos=False):
-    """'busca' procura no nome ou no CPF (só dígitos)."""
+    """Busca no nome ou no CPF."""
     sql = "SELECT * FROM paciente WHERE 1=1"
     parametros = []
     if not incluir_inativos:
@@ -50,7 +48,7 @@ def definir_ativo(id_paciente, ativo):
     return linhas
 
 
-# ---------- anamnese ----------
+# anamnese
 CAMPOS_ANAMNESE = ("queixa_principal", "historico_saude", "alergias",
                    "medicamentos_em_uso", "observacoes")
 
@@ -77,7 +75,7 @@ def atualizar_anamnese(id_anamnese, d):
     return linhas
 
 
-# ---------- histórico ----------
+# histórico
 def historico(id_paciente):
     return consultar(
         """SELECT v.id_atendimento, v.data_hora, v.status, v.valor_total,

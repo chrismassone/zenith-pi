@@ -1,31 +1,24 @@
-"""Execução de SQL parametrizado, comum a todos os repositórios.
-
-Os repositórios só montam SQL e devolvem dados; não têm regra de negócio.
-Erros do MySQL viram exceções próprias, para a camada de serviços traduzir
-em mensagens claras ao usuário.
-"""
+"""Execução de SQL parametrizado e tradução dos erros do MySQL."""
 from contextlib import contextmanager
 
 from mysql.connector import Error
 
 from database.conexao import conectar
 
-ERRO_DUPLICADO = 1062   # violação de UNIQUE
-ERRO_FK = 1452          # referência para registro inexistente
-ERRO_CHECK = 3819       # violação de CHECK
-SINAL_GATILHO = "45000" # SIGNAL dos gatilhos (ex.: saldo insuficiente)
+ERRO_DUPLICADO = 1062
+ERRO_FK = 1452
+ERRO_CHECK = 3819
+SINAL_GATILHO = "45000"  # SIGNAL dos gatilhos de saldo
 
 
 class RegistroDuplicado(Exception):
-    """Valor único repetido. .chave traz o nome da restrição (ex.: uq_paciente_cpf)."""
-
     def __init__(self, chave):
         self.chave = chave
         super().__init__(chave)
 
 
 class RegraDoBanco(Exception):
-    """O banco recusou a gravação por uma regra (gatilho, CHECK ou FK)."""
+    """Recusa por gatilho, CHECK ou FK."""
 
 
 def _traduzir(erro):
@@ -41,7 +34,6 @@ def _traduzir(erro):
 
 
 def consultar(sql, parametros=(), um=False):
-    """SELECT: devolve lista de dicionários (ou um dicionário / None)."""
     conn = conectar()
     try:
         cursor = conn.cursor(dictionary=True)
@@ -54,7 +46,7 @@ def consultar(sql, parametros=(), um=False):
 
 
 def executar(sql, parametros=()):
-    """INSERT/UPDATE isolado, com commit. Devolve (lastrowid, rowcount)."""
+    """INSERT/UPDATE com commit. Devolve (lastrowid, rowcount)."""
     with transacao() as cursor:
         cursor.execute(sql, parametros)
         return cursor.lastrowid, cursor.rowcount
@@ -62,12 +54,7 @@ def executar(sql, parametros=()):
 
 @contextmanager
 def transacao():
-    """Várias gravações que entram juntas ou não entram:
-
-        with transacao() as cur:
-            cur.execute(...)
-            cur.execute(...)
-    """
+    """Várias gravações numa transação: with transacao() as cur: ..."""
     conn = conectar()
     try:
         cursor = conn.cursor(dictionary=True)

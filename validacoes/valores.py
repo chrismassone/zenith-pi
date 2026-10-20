@@ -1,12 +1,11 @@
-"""Conversão de textos digitados (data, hora, dinheiro, quantidade).
-Funções puras: devolvem None quando o texto não é válido."""
+"""Conversão do texto digitado. Devolvem None quando inválido."""
 from datetime import date, datetime, time
 from decimal import Decimal, InvalidOperation
 import re
 
 
 def converter_data(texto):
-    """'dd/mm/aaaa' (ou 'ddmmaaaa') -> date. date já pronta passa direto."""
+    """'dd/mm/aaaa' ou 'ddmmaaaa' -> date."""
     if isinstance(texto, date):
         return texto
     texto = (texto or "").strip()
@@ -21,7 +20,7 @@ def converter_data(texto):
 
 
 def converter_hora(texto):
-    """'hh:mm' (ou 'hhmm') -> time."""
+    """'hh:mm' ou 'hhmm' -> time."""
     if isinstance(texto, time):
         return texto
     texto = (texto or "").strip()
@@ -34,14 +33,14 @@ def converter_hora(texto):
 
 
 def converter_decimal(texto, casas=2):
-    """'1.234,56', '1234,56', '1234.56' ou número -> Decimal. None se inválido."""
+    """'1.234,56', '1234.56' ou número -> Decimal."""
     if isinstance(texto, (int, float, Decimal)):
         valor = Decimal(str(texto))
     else:
         texto = (texto or "").strip().replace("R$", "").replace(" ", "")
         if not texto:
             return None
-        if "," in texto:                       # padrão brasileiro
+        if "," in texto:                       # formato brasileiro
             texto = texto.replace(".", "").replace(",", ".")
         if not re.fullmatch(r"-?\d+(\.\d+)?", texto):
             return None

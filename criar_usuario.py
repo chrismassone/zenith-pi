@@ -1,11 +1,4 @@
-"""Cria um usuário do Zenith pelo terminal.
-
-Uso:  python criar_usuario.py
-
-Pede nome, e-mail e perfil (Gerente, Atendente ou Profissional). A senha é
-digitada sem aparecer na tela (getpass), com no mínimo 10 caracteres, e é
-guardada apenas como hash bcrypt. A senha nunca é exibida nem registrada.
-"""
+"""Cria um usuário do sistema. Uso: python criar_usuario.py"""
 from getpass import getpass
 
 from servicos import autenticacao, permissoes
@@ -66,7 +59,7 @@ def main():
         print("\n" + erro.mensagem)
         return 1
     finally:
-        senha = confirmacao = None   # não manter a senha em memória à toa
+        senha = confirmacao = None
     print(f"\nUsuário criado: {nome} ({email.lower()}), perfil {perfil}.")
     return 0
 

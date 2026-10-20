@@ -1,4 +1,3 @@
-"""Tela Início: cartões com números reais e a agenda do dia."""
 import customtkinter as ctk
 
 from interface.componentes import Mensagem, Tabela, grade_kpis

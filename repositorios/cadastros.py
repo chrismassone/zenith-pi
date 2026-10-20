@@ -1,5 +1,3 @@
-"""SQL dos cadastros simples: unidade, fornecedor, procedimento (com a
-lista de insumos padrão) e insumo. Sem regra de negócio."""
 from repositorios.base import consultar, executar, transacao
 
 
@@ -32,7 +30,7 @@ def _ativo(tabela, chave, id_, ativo):
     return linhas
 
 
-# ---------- unidade ----------
+# unidade
 def listar_unidades(busca="", incluir_inativos=False):
     return _filtro("SELECT * FROM unidade WHERE 1=1", "nome_clinica", busca,
                    incluir_inativos, "nome_clinica")
@@ -50,7 +48,7 @@ def ativar_unidade(id_, ativo):
     return _ativo("unidade", "id_unidade", id_, ativo)
 
 
-# ---------- fornecedor ----------
+# fornecedor
 def listar_fornecedores(busca="", incluir_inativos=False):
     return _filtro("SELECT * FROM fornecedor WHERE 1=1", "razao_social", busca,
                    incluir_inativos, "razao_social")
@@ -68,7 +66,7 @@ def ativar_fornecedor(id_, ativo):
     return _ativo("fornecedor", "id_fornecedor", id_, ativo)
 
 
-# ---------- procedimento ----------
+# procedimento
 def listar_procedimentos(busca="", incluir_inativos=False):
     return _filtro(
         """SELECT p.*, c.custo_insumos, c.qtd_insumos
@@ -86,8 +84,7 @@ def insumos_do_procedimento(id_procedimento):
 
 
 def salvar_procedimento(id_, d, insumos):
-    """Insere ou altera o procedimento e substitui a lista de insumos padrão,
-    tudo na mesma transação. insumos = [(id_insumo, quantidade_padrao)]."""
+    """Grava o procedimento e a lista de insumos padrão na mesma transação."""
     with transacao() as cur:
         if id_ is None:
             cur.execute("""INSERT INTO procedimento (nome_procedimento, preco_tabela,
@@ -105,7 +102,6 @@ def salvar_procedimento(id_, d, insumos):
                     (id_,))
         atuais = {r["id_insumo"] for r in cur.fetchall()}
         for removido in atuais - novos:
-            # exige DELETE do zenith_app nesta tabela de detalhe (ver LEIA-ME)
             cur.execute("DELETE FROM procedimento_insumo WHERE id_procedimento = %s "
                         "AND id_insumo = %s", (id_, removido))
         for id_insumo, qtd in insumos:
@@ -121,7 +117,7 @@ def ativar_procedimento(id_, ativo):
     return _ativo("procedimento", "id_procedimento", id_, ativo)
 
 
-# ---------- insumo ----------
+# insumo
 def listar_insumos(busca="", incluir_inativos=False):
     return _filtro("SELECT * FROM insumo WHERE 1=1", "nome_insumo", busca,
                    incluir_inativos, "nome_insumo")

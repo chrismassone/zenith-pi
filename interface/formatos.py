@@ -1,11 +1,9 @@
-"""Formatação de valores para exibição na interface. Funções puras, sem
-nada gráfico, testadas em teste_formatos.py. A validação dos dados fica
-na camada de serviços (servicos/)."""
+"""Formatação de valores para exibição."""
 from datetime import date, datetime
 from decimal import Decimal
 import re
 
-from validacoes.valores import converter_data  # noqa: F401  (reexportado para as telas)
+from validacoes.valores import converter_data  # noqa: F401
 
 MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto",
          "setembro", "outubro", "novembro", "dezembro"]
@@ -16,7 +14,6 @@ def _digitos(texto):
 
 
 def formatar_cpf(cpf):
-    """'52998224725' -> '529.982.247-25'. Fora do padrão, devolve como veio."""
     d = _digitos(cpf)
     if len(d) != 11:
         return cpf or ""
@@ -31,8 +28,7 @@ def formatar_cnpj(cnpj):
 
 
 def formatar_telefone(telefone):
-    """Celular '11987654321' -> '(11) 98765-4321'; fixo '1133334444' ->
-    '(11) 3333-4444'. Fora do padrão, devolve como veio."""
+    """Celular (11) 98765-4321 ou fixo (11) 3333-4444; fora do padrão, devolve como veio."""
     d = _digitos(telefone)
     if len(d) == 11:
         return f"({d[:2]}) {d[2:7]}-{d[7:]}"
@@ -42,7 +38,6 @@ def formatar_telefone(telefone):
 
 
 def formatar_cep(cep):
-    """'03047000' -> '03047-000'. Fora do padrão, devolve como veio."""
     d = _digitos(cep)
     if len(d) != 8:
         return cep or ""
@@ -50,7 +45,6 @@ def formatar_cep(cep):
 
 
 def formatar_data(valor):
-    """date ou datetime -> 'dd/mm/aaaa'. None -> ''."""
     return valor.strftime("%d/%m/%Y") if isinstance(valor, (date, datetime)) else ""
 
 
@@ -63,7 +57,7 @@ def formatar_hora(valor):
 
 
 def numero(valor, casas=2):
-    """Decimal -> '1.234,50' (padrão brasileiro). Inteiros sem ',00'."""
+    """Formato brasileiro; inteiros sem ',00'."""
     if valor is None:
         return ""
     texto = f"{Decimal(valor):,.{casas}f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -73,7 +67,6 @@ def numero(valor, casas=2):
 
 
 def brl(valor):
-    """Decimal -> 'R$ 1.234,56'. Negativo: '-R$ 50,00'. None -> '—'."""
     if valor is None:
         return "—"
     v = Decimal(valor)
@@ -82,19 +75,16 @@ def brl(valor):
 
 
 def percentual(razao, casas=1):
-    """0.9071 -> '90,7%'. None -> '—'."""
     if razao is None:
         return "—"
     return f"{Decimal(razao) * 100:.{casas}f}".replace(".", ",") + "%"
 
 
 def mes_extenso(ano_mes):
-    """'2026-09' -> 'Setembro de 2026'."""
     ano, mes = ano_mes.split("-")
     return f"{MESES[int(mes) - 1].capitalize()} de {ano}"
 
 
 def mes_curto(ano_mes):
-    """'2026-09' -> 'set/26' (eixos de gráfico)."""
     ano, mes = ano_mes.split("-")
     return f"{MESES[int(mes) - 1][:3]}/{ano[2:]}"

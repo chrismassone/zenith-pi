@@ -1,17 +1,16 @@
-"""Regras dos cadastros simples: unidades, fornecedores, procedimentos
-(com a lista de insumos padrão) e insumos."""
+"""Unidades, fornecedores, procedimentos e insumos."""
 from repositorios import cadastros as repo
 from servicos.base import banco
 from servicos.erros import DadosInvalidos
 from servicos.validador import Campo, validar, validar_ou_falhar
 
-# ---------- unidades ----------
+# unidades
 CAMPOS_UNIDADE = [
     Campo("nome_clinica", "Nome da unidade", maximo=50),
     Campo("bairro_unidade", "Bairro", maximo=40),
     Campo("cidade_unidade", "Cidade", maximo=40),
     Campo("uf_unidade", "UF", "uf"),
-    # SUPOSIÇÃO: valor por dia de uso da sala (ver vw_dash_unidade)
+    # suposição: valor por dia de uso da sala
     Campo("valor_locacao", "Valor de locação por dia", "decimal", minimo=0),
 ]
 
@@ -23,7 +22,7 @@ def listar_unidades(sessao, busca="", incluir_inativos=False):
 
 
 def unidades_ativas(sessao):
-    """Para os filtros e seletores de outras telas (não exige o módulo Unidades)."""
+    """Lista para filtros de outras telas (não exige acesso ao módulo Unidades)."""
     sessao.tocar()
     with banco():
         return repo.listar_unidades()
@@ -45,7 +44,7 @@ def ativar_unidade(sessao, id_, ativo):
         repo.ativar_unidade(id_, ativo)
 
 
-# ---------- fornecedores ----------
+# fornecedores
 CAMPOS_FORNECEDOR = [
     Campo("razao_social", "Razão social", maximo=100),
     Campo("cnpj", "CNPJ", "cnpj"),
@@ -79,7 +78,7 @@ def ativar_fornecedor(sessao, id_, ativo):
         repo.ativar_fornecedor(id_, ativo)
 
 
-# ---------- procedimentos ----------
+# procedimentos
 CAMPOS_PROCEDIMENTO = [
     Campo("nome_procedimento", "Nome do procedimento", maximo=60),
     Campo("preco_tabela", "Preço de tabela", "decimal", minimo=0),
@@ -109,12 +108,11 @@ def insumos_do_procedimento(sessao, id_procedimento):
 
 
 def validar_lista_insumos(linhas):
-    """linhas = [{'id_insumo': ..., 'quantidade_padrao': texto}] -> [(id, Decimal)].
-    Erros vão na chave 'insumos'."""
+    """Valida as linhas de insumo padrão -> [(id_insumo, quantidade)]."""
     resultado, vistos = [], set()
     for n, linha in enumerate(linhas, start=1):
         if not linha.get("id_insumo") and not str(linha.get("quantidade_padrao") or "").strip():
-            continue                                    # linha em branco: ignora
+            continue
         limpos, erros = validar(linha, [
             Campo("id_insumo", "Insumo", "id"),
             Campo("quantidade_padrao", "Quantidade padrão", "decimal", maior_que_zero=True)])
@@ -143,7 +141,7 @@ def ativar_procedimento(sessao, id_, ativo):
         repo.ativar_procedimento(id_, ativo)
 
 
-# ---------- insumos (cadastro) ----------
+# insumos (cadastro)
 UNIDADES_MEDIDA = ["U", "mL", "g", "un", "par", "frasco", "seringa"]
 CAMPOS_INSUMO = [
     Campo("nome_insumo", "Nome do insumo", maximo=60),

@@ -1,4 +1,3 @@
-"""SQL da tabela usuario. Sem regra de negócio (ver servicos/autenticacao.py)."""
 from repositorios.base import consultar, executar
 
 COLUNAS = ("id_usuario, nome, email, senha_hash, perfil, id_profissional, ativo, "

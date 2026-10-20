@@ -1,6 +1,4 @@
-"""SQL de leitura para Início, Financeiro e Dashboard. Lê SOMENTE as views
-vw_* (as mesmas do Power BI), para os números baterem nos dois lugares.
-O período é sempre por mês: 'aaaa-mm'."""
+"""Leituras de Início, Financeiro e Dashboard, só das views vw_*. Período em 'aaaa-mm'."""
 from repositorios.base import consultar, executar
 
 
@@ -28,7 +26,7 @@ def meses_disponiveis():
         "SELECT DISTINCT ano_mes FROM vw_dash_kpis_mensal ORDER BY ano_mes")]
 
 
-# ---------- Financeiro / Dashboard ----------
+# financeiro / dashboard
 def por_unidade(ano_ini, ano_fim, id_unidade=None):
     onde, par = _filtros("", ano_ini, ano_fim, id_unidade)
     return consultar(f"""SELECT id_unidade, nome_clinica,
@@ -111,7 +109,7 @@ def validade_alertas():
     return consultar("SELECT * FROM vw_alerta_validade ORDER BY data_validade")
 
 
-# ---------- lançamentos ----------
+# lançamentos
 def listar_lancamentos(ano_ini, ano_fim, id_unidade=None):
     sql = """SELECT l.*, u.nome_clinica FROM lancamento l
                LEFT JOIN unidade u USING (id_unidade)
@@ -124,7 +122,7 @@ def listar_lancamentos(ano_ini, ano_fim, id_unidade=None):
 
 
 def despesas_gerais(ano_ini, ano_fim):
-    """Despesas sem unidade (não entram na margem por unidade)."""
+    """Despesas sem unidade."""
     return consultar(
         """SELECT COALESCE(SUM(valor), 0) AS total FROM lancamento
             WHERE tipo = 'DESPESA' AND id_unidade IS NULL
@@ -150,7 +148,7 @@ def atualizar_lancamento(id_, d):
     return n
 
 
-# ---------- Início ----------
+# início
 def resumo_inicio(hoje, fim_semana):
     return consultar(
         """SELECT (SELECT COUNT(*) FROM paciente WHERE ativo = TRUE) AS pacientes_ativos,

@@ -1,4 +1,4 @@
-"""Componentes visuais reutilizáveis. Todos os valores vêm de tema.py."""
+"""Componentes visuais reutilizados pelas telas."""
 import tkinter as tk
 
 import customtkinter as ctk
@@ -9,9 +9,7 @@ from interface.tema import Cor, Espaco, Raio, Medida, Fonte
 
 
 class AgendaSegura:
-    """after() que é cancelado quando o widget é destruído. O Tk apaga o
-    comando do after junto com o widget; se ele ainda estiver agendado, o
-    disparo vira o erro "invalid command name ..."."""
+    """after() que é cancelado junto com o widget (evita 'invalid command name')."""
 
     def agendar(self, ms, funcao):
         ids = self.__dict__.setdefault("_agendados", set())
@@ -40,8 +38,6 @@ class Cartao(ctk.CTkFrame):
 
 
 class BotaoPrincipal(ctk.CTkButton):
-    """Fundo dourado, texto branco em negrito."""
-
     def __init__(self, master, texto, comando, **kwargs):
         kwargs.setdefault("height", Medida.CONTROLE_ALTURA)
         kwargs.setdefault("width", Medida.BOTAO_LARGURA_MIN)
@@ -52,8 +48,6 @@ class BotaoPrincipal(ctk.CTkButton):
 
 
 class BotaoSecundario(ctk.CTkButton):
-    """Fundo branco, borda e texto dourados."""
-
     def __init__(self, master, texto, comando, **kwargs):
         kwargs.setdefault("height", Medida.CONTROLE_ALTURA)
         kwargs.setdefault("width", Medida.BOTAO_LARGURA_MIN)
@@ -65,15 +59,13 @@ class BotaoSecundario(ctk.CTkButton):
 
 
 class Divisoria(ctk.CTkFrame):
-    """Linha horizontal de 1 px."""
-
     def __init__(self, master, **kwargs):
         super().__init__(master, height=Medida.DIVISORIA, corner_radius=0,
                          fg_color=Cor.BORDA_SUAVE, **kwargs)
 
 
 class Mensagem(ctk.CTkLabel):
-    """Linha de aviso para o usuário: erro, sucesso ou vazia."""
+    """Linha de aviso: erro, sucesso ou vazia."""
 
     def __init__(self, master, **kwargs):
         super().__init__(master, text="", font=Fonte.corpo, anchor="w",
@@ -90,7 +82,6 @@ class Mensagem(ctk.CTkLabel):
 
 
 def entrada(master, **kwargs):
-    """Campo de texto padrão, com borda visível."""
     kwargs.setdefault("height", Medida.CONTROLE_ALTURA)
     return ctk.CTkEntry(master, font=Fonte.corpo, corner_radius=Raio.CONTROLE,
                         border_width=Medida.BORDA_CAMPO, border_color=Cor.BORDA_CAMPO,
@@ -99,10 +90,7 @@ def entrada(master, **kwargs):
 
 
 class Campo(ctk.CTkFrame):
-    """Rótulo em negrito acima, controle no meio, mensagem de erro abaixo.
-    Com 'sugestoes', o controle é uma caixa editável com lista de opções.
-    Com 'opcoes' [(valor, rótulo)], é um seletor fechado (valor() devolve o valor).
-    Com 'multilinha', é uma caixa de texto de várias linhas."""
+    """Rótulo, controle e mensagem de erro. O controle pode ser texto, lista fechada (opcoes), lista com sugestões ou texto longo."""
 
     def __init__(self, master, rotulo, dica="", sugestoes=None, opcoes=None,
                  multilinha=False, vazio="Selecione"):
@@ -177,9 +165,7 @@ class Campo(ctk.CTkFrame):
 
 
 class DialogoConfirmacao(AgendaSegura, ctk.CTkToplevel):
-    """Diálogo modal de confirmação com o visual do sistema.
-    Abre centralizado sobre a janela do programa e bloqueia a janela de trás.
-    Enter confirma; Esc ou fechar a janela cancela. Use a função confirmar()."""
+    """Confirmação modal. Enter confirma, Esc cancela."""
 
     def __init__(self, master, titulo, texto, rotulo_confirmar):
         self.janela = master.winfo_toplevel()
@@ -221,8 +207,7 @@ class DialogoConfirmacao(AgendaSegura, ctk.CTkToplevel):
             self.agendar(20, self._bloquear_janela_de_tras)
 
     def _centralizar(self):
-        # o CustomTkinter ajusta a escala logo após abrir e o tamanho final
-        # só existe depois disso; medimos de novo assim que a janela aparece
+        # o tamanho final só existe depois que a janela aparece
         self.update_idletasks()
         self._posicionar(self.winfo_reqwidth(), self.winfo_reqheight())
         self.agendar(50, lambda:
@@ -230,19 +215,17 @@ class DialogoConfirmacao(AgendaSegura, ctk.CTkToplevel):
 
     def _posicionar(self, largura, altura):
         j = self.janela
-        # "+x+y" posiciona a moldura (barra de título e borda), não a área
-        # interna; descontamos essa diferença, que só é conhecida após abrir
+        # "+x+y" posiciona a moldura, não a área interna
         borda_x = self.winfo_rootx() - self.winfo_x()
         borda_y = self.winfo_rooty() - self.winfo_y()
         x = j.winfo_rootx() + (j.winfo_width() - largura) // 2 - borda_x
         y = j.winfo_rooty() + (j.winfo_height() - altura) // 2 - borda_y
-        # só a posição, em pixels reais; o tamanho fica o que o conteúdo pede
         tk.Toplevel.wm_geometry(self, f"+{max(x, 0)}+{max(y, 0)}")
 
     def _definir_icone(self):
         icone = tema.ASSETS / "icone_app.ico"
         if icone.exists():
-            # o CustomTkinter troca o ícone ~200 ms após abrir; aplicamos depois
+            # o CustomTkinter troca o ícone logo depois de abrir
             self.agendar(300, lambda: self.iconbitmap(str(icone)))
 
     def confirmar(self):
@@ -260,20 +243,14 @@ class DialogoConfirmacao(AgendaSegura, ctk.CTkToplevel):
 
 
 def confirmar(master, titulo, texto, rotulo_confirmar):
-    """Abre o diálogo e espera a resposta. Retorna True se confirmado."""
+    """Abre o diálogo e devolve True se o usuário confirmar."""
     dialogo = DialogoConfirmacao(master, titulo, texto, rotulo_confirmar)
     dialogo.wait_window()
     return dialogo.resultado
 
 
 class CaixaOpcoes(ctk.CTkFrame):
-    """Caixa de opções desenhada pelo próprio sistema: moldura única com
-    borda contínua (a do CustomTkinter cobre a borda com o bloco da seta),
-    texto que não é cortado e uma seta em traço fino.
-
-    opcoes = [(valor, rótulo)]. Fechada (padrão): valor() devolve o valor.
-    editavel=True: o usuário digita livremente e a lista só sugere textos.
-    """
+    """Lista de opções [(valor, rótulo)]. Com editavel=True aceita texto livre."""
 
     def __init__(self, master, opcoes, vazio="Selecione", comando=None, editavel=False,
                  width=None, height=None, **_ignorado):
@@ -282,8 +259,7 @@ class CaixaOpcoes(ctk.CTkFrame):
         super().__init__(master, height=altura, corner_radius=Raio.CONTROLE,
                          border_width=Medida.BORDA_CAMPO, border_color=Cor.BORDA_CAMPO,
                          fg_color=Cor.FUNDO, **kwargs)
-        # a moldura mantém a própria altura; sem isso ela encolhe até o texto
-        # e o texto cobre a borda de cima e de baixo
+        # sem isso a moldura encolhe e o texto cobre a borda
         self.grid_propagate(False)
         self._vazio, self._comando, self._editavel = vazio, comando, editavel
         self._estado = "normal"
@@ -311,7 +287,6 @@ class CaixaOpcoes(ctk.CTkFrame):
                                  command=self._escolheu)
         self.trocar_opcoes(opcoes)
 
-    # ----- desenho -----
     def _desenhar_seta(self):
         c = self.seta
         c.delete("all")
@@ -324,7 +299,6 @@ class CaixaOpcoes(ctk.CTkFrame):
                       fill=cor, width=max(1.5, escala * 1.5), capstyle="round",
                       joinstyle="round")
 
-    # ----- opções -----
     def trocar_opcoes(self, opcoes):
         self._opcoes = [] if self._editavel else [(None, self._vazio)]
         self._opcoes += [(v, str(r)) for v, r in opcoes]
@@ -359,7 +333,6 @@ class CaixaOpcoes(ctk.CTkFrame):
         if self._comando:
             self._comando(self.valor())
 
-    # ----- interface usada pelas telas -----
     def valor(self):
         return self.texto.get() if self._editavel else self._atual
 
@@ -381,13 +354,10 @@ class CaixaOpcoes(ctk.CTkFrame):
 
 
 class Seletor(CaixaOpcoes):
-    """Lista fechada de opções [(valor, rótulo)]. valor() devolve o valor
-    escolhido (ou None na opção vazia)."""
+    """Lista fechada; valor() devolve o valor escolhido ou None."""
 
 
 class Cabecalho(ctk.CTkFrame):
-    """Título leve, subtítulo e traço dourado de assinatura."""
-
     def __init__(self, master, titulo, subtitulo=""):
         super().__init__(master, fg_color="transparent")
         self.titulo = ctk.CTkLabel(self, text=titulo, font=Fonte.h1, text_color=Cor.TEXTO,
@@ -411,8 +381,7 @@ class Cabecalho(ctk.CTkFrame):
 
 
 class Abas(ctk.CTkFrame):
-    """Abas de texto: a ativa fica em negrito com sublinhado dourado.
-    abas = [(chave, rótulo)]; ao_trocar(chave) é chamado no clique."""
+    """Abas de texto [(chave, rótulo)]; a ativa fica sublinhada."""
 
     def __init__(self, master, abas, ao_trocar, ativa=None):
         super().__init__(master, fg_color="transparent")
@@ -421,12 +390,10 @@ class Abas(ctk.CTkFrame):
         for coluna, (chave, rotulo) in enumerate(abas):
             caixa = ctk.CTkFrame(self, fg_color="transparent", width=1, height=1)
             caixa.grid(row=0, column=coluna, padx=(0, Espaco.XL), sticky="s")
-            # rótulo clicável: a aba tem a largura do texto (botão teria largura mínima)
             botao = ctk.CTkLabel(caixa, text=rotulo, font=Fonte.corpo,
                                  text_color=Cor.TEXTO_SECUNDARIO, cursor="hand2")
             botao.pack(pady=(Espaco.S, Espaco.M))
             botao.bind("<Button-1>", lambda _e, c=chave: self.ativar(c, avisar=True))
-            # width=1: o traço acompanha a largura do texto (o padrão seria 200 px)
             traco = ctk.CTkFrame(caixa, width=1, height=Medida.ABA_TRACO, corner_radius=0,
                                  fg_color=Cor.FUNDO)
             traco.pack(fill="x")
@@ -448,8 +415,6 @@ class Abas(ctk.CTkFrame):
 
 
 class CartaoKpi(Cartao):
-    """Indicador: rótulo, valor grande e nota."""
-
     def __init__(self, master, rotulo, valor, nota="", cor_nota=None):
         super().__init__(master)
         ctk.CTkLabel(self, text=rotulo, font=Fonte.corpo, text_color=Cor.TEXTO_SECUNDARIO,
@@ -462,7 +427,7 @@ class CartaoKpi(Cartao):
 
 
 def grade_kpis(master, kpis, colunas=3):
-    """kpis = [(rótulo, valor, nota)]. Devolve o frame com os cartões em grade."""
+    """kpis = [(rótulo, valor, nota)]"""
     grade = ctk.CTkFrame(master, fg_color="transparent")
     for c in range(colunas):
         grade.grid_columnconfigure(c, weight=1, uniform="kpi")
@@ -475,8 +440,7 @@ def grade_kpis(master, kpis, colunas=3):
 
 
 class Barras(Cartao):
-    """Barras horizontais pareadas por grupo (ex.: faturamento x custo por
-    unidade). grupos = [(nome, [(rótulo, valor, cor, texto_valor)])]."""
+    """Barras horizontais por grupo: [(nome, [(rótulo, valor, cor, texto)])]."""
 
     def __init__(self, master, grupos):
         super().__init__(master)
@@ -508,14 +472,7 @@ class Barras(Cartao):
 
 
 class Tabela(Cartao):
-    """Tabela sem zebra, cabeçalho em superfície suave, linhas de altura fixa,
-    divisórias de 1 px e estado vazio. Mostra as linhas em páginas, para não
-    criar milhares de controles de uma vez.
-
-    colunas = [(título, peso, alinhamento "w" ou "e")]
-    linhas  = [[texto ou (texto, cor) por coluna]]
-    acoes   = função(dado_da_linha) -> [(rótulo, comando)] na última coluna
-    """
+    """Tabela paginada. colunas = [(título, peso, 'w' ou 'e')]; acoes(dado) -> [(rótulo, comando)]."""
 
     POR_PAGINA = 25
 
@@ -606,8 +563,7 @@ class Tabela(Cartao):
 
 
 class RodapeFormulario(ctk.CTkFrame):
-    """Rodapé fixo do formulário: divisória, mensagem à esquerda e botões
-    Cancelar (secundário) e Salvar (principal) à direita."""
+    """Rodapé fixo com mensagem, Cancelar e Salvar."""
 
     def __init__(self, master, ao_cancelar, ao_salvar, rotulo_salvar="Salvar",
                  somente_leitura=False):
@@ -629,17 +585,7 @@ class RodapeFormulario(ctk.CTkFrame):
 
 
 class AreaRolavel(ctk.CTkFrame):
-    """Área com rolagem vertical, no lugar do CTkScrollableFrame.
-
-    O componente do CustomTkinter registra tratadores GLOBAIS (bind_all) da
-    roda e da tecla Shift a cada instância e nunca os remove: a cada troca de
-    tela eles se acumulam, inclusive os de telas já destruídas. Esta área não
-    registra nada global; a roda é tratada uma única vez pela janela
-    (Janela._rolar), que acha a área sob o mouse pelo atributo _parent_canvas.
-
-    O objeto devolvido é a moldura INTERNA (onde os filhos são colocados);
-    grid/pack/destroy agem na moldura externa, como no componente original.
-    """
+    """Área com rolagem vertical, sem os tratadores globais do CTkScrollableFrame. O objeto é a moldura interna; grid/pack agem na externa."""
 
     def __init__(self, master):
         self._externo = ctk.CTkFrame(master, fg_color=Cor.FUNDO, corner_radius=0)
@@ -660,7 +606,6 @@ class AreaRolavel(ctk.CTkFrame):
         tk.Misc.bind(self, "<Configure>", self._atualizar_regiao, "+")
 
     def _ajustar_largura(self, evento=None):
-        # a moldura interna acompanha a largura visível da área
         self._parent_canvas.itemconfigure(self._janela,
                                           width=self._parent_canvas.winfo_width())
 
@@ -669,13 +614,11 @@ class AreaRolavel(ctk.CTkFrame):
 
     def _posicao(self, inicio, fim):
         self._barra.set(inicio, fim)
-        # a barra só aparece quando há o que rolar
         if float(inicio) <= 0 and float(fim) >= 1:
             self._barra.grid_remove()
         else:
             self._barra.grid()
 
-    # posicionamento e destruição agem na moldura externa
     def grid(self, **kwargs):
         self._externo.grid(**kwargs)
 
@@ -701,7 +644,6 @@ class AreaRolavel(ctk.CTkFrame):
 
 
 def caixa_rolagem(master):
-    """Área com rolagem vertical no fundo branco (corpo de formulários e tabelas)."""
     return AreaRolavel(master)
 
 

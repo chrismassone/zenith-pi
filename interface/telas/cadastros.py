@@ -1,5 +1,4 @@
-"""Telas de cadastro: Unidades, Procedimentos (com insumos padrão),
-Insumos e Fornecedores."""
+"""Unidades, procedimentos, insumos e fornecedores."""
 import customtkinter as ctk
 
 from interface.componentes import BotaoSecundario, Cartao, Seletor, entrada
@@ -14,7 +13,6 @@ def _situacao(r):
     return ("Ativo", Cor.TEXTO) if r["ativo"] else ("Inativo", Cor.TEXTO_SECUNDARIO)
 
 
-# ======================================================================
 class TelaUnidades(TelaCadastro):
     MODULO = "unidades"
     TITULO, SUBTITULO = "Unidades", "Locais de atendimento"
@@ -57,7 +55,6 @@ class TelaUnidades(TelaCadastro):
         srv.ativar_unidade(self.sessao, id_, ativo)
 
 
-# ======================================================================
 class TelaProcedimentos(TelaCadastro):
     MODULO = "procedimentos"
     TITULO = "Procedimentos"
@@ -93,7 +90,7 @@ class TelaProcedimentos(TelaCadastro):
         d["preco_tabela"] = numero(r["preco_tabela"]).replace(".", "")
         return d
 
-    # ----- lista de insumos padrão (editável) -----
+    # insumos padrão
     def secao_extra(self, corpo, linha_grade):
         r = self.registro
         self._insumos = self.chamar(srv.insumos_ativos)
@@ -176,9 +173,7 @@ class TelaProcedimentos(TelaCadastro):
         srv.ativar_procedimento(self.sessao, id_, ativo)
 
 
-# ======================================================================
 class CadastroInsumos(TelaCadastro):
-    """Cadastro de insumos (aba da tela Insumos)."""
     MODULO = "insumos"
     TITULO, SUBTITULO = "Insumos", "Controle de estoque, compras e validade"
     TEXTO_NOVO, TITULO_NOVO, TITULO_EDITAR = "Novo insumo", "Novo insumo", "Editar insumo"
@@ -220,7 +215,6 @@ class CadastroInsumos(TelaCadastro):
 
 
 class CadastroFornecedores(TelaCadastro):
-    """Cadastro de fornecedores (aba da tela Insumos)."""
     MODULO = "insumos"
     TITULO, SUBTITULO = "Insumos", "Controle de estoque, compras e validade"
     TEXTO_NOVO, TITULO_NOVO, TITULO_EDITAR = ("Novo fornecedor", "Novo fornecedor",

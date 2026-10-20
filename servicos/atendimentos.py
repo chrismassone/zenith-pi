@@ -1,13 +1,4 @@
-"""Regras de atendimentos: itens, valor, situação e o consumo de insumos
-registrado quando o atendimento é marcado como Realizado.
-
-Fluxo para marcar Realizado:
-  1. sugerir_consumo() devolve os insumos padrão dos procedimentos, com a
-     quantidade SUGERIDA e o saldo de cada um;
-  2. a profissional ajusta as quantidades na tela;
-  3. salvar(..., consumos=[(id_insumo, quantidade_final)]) grava tudo numa
-     transação e recusa qualquer quantidade acima do saldo.
-"""
+"""Atendimentos: itens, valores, situação e consumo de insumos ao realizar."""
 from collections import OrderedDict
 from datetime import datetime
 from decimal import Decimal
@@ -41,9 +32,8 @@ CAMPOS_ITEM = [
 ]
 
 
-# ---------------- lógica pura (testável sem banco) ----------------
 def validar_itens(linhas):
-    """Linhas em branco são ignoradas; linhas incompletas geram erro na chave 'itens'."""
+    """Ignora linhas em branco; linha incompleta vira erro em 'itens'."""
     itens = []
     for n, linha in enumerate(linhas, start=1):
         if not any(str(linha.get(c.chave) or "").strip() for c in CAMPOS_ITEM):
@@ -60,7 +50,7 @@ def subtotal(itens):
 
 
 def total(itens, desconto):
-    """Mesma regra da view vw_valor_atendimento: itens - desconto, nunca negativo."""
+    """Itens menos desconto, nunca negativo (igual à vw_valor_atendimento)."""
     return max(subtotal(itens) - (desconto or Decimal("0")), Decimal("0.00"))
 
 
@@ -68,7 +58,7 @@ def regras_cabecalho(d, itens, agora):
     erros = {}
     if d["status"] in ("Agendado", "Realizado") and not itens:
         erros["itens"] = "Inclua ao menos um procedimento."
-    # SUPOSIÇÃO: atendimento realizado precisa ter a forma de pagamento informada
+    # suposição: realizado exige forma de pagamento
     if d["status"] == "Realizado" and not d["forma_pagamento"]:
         erros["forma_pagamento"] = "Informe a forma de pagamento do atendimento realizado."
     if d["status"] in ("Realizado", "Faltou") and d["data_hora"] > agora:
@@ -79,9 +69,7 @@ def regras_cabecalho(d, itens, agora):
 
 
 def agregar_sugestoes(linhas_sugestao, ids_procedimento):
-    """Soma a quantidade padrão por insumo, uma vez por procedimento incluído
-    (o mesmo procedimento duas vezes conta duas vezes). Devolve a lista na
-    ordem do nome do insumo, com saldo e quantidade sugerida."""
+    """Soma a quantidade padrão de cada insumo, uma vez por procedimento incluído."""
     vezes = {}
     for pid in ids_procedimento:
         vezes[pid] = vezes.get(pid, 0) + 1
@@ -96,8 +84,7 @@ def agregar_sugestoes(linhas_sugestao, ids_procedimento):
 
 
 def validar_consumos(linhas):
-    """linhas = [{'id_insumo', 'quantidade' (texto)}] -> [(id, Decimal)] sem
-    as quantidades zero (insumo não usado)."""
+    """Converte as quantidades digitadas e descarta as que forem zero."""
     resultado = {}
     for linha in linhas:
         qtd = converter_decimal(linha.get("quantidade"))
@@ -110,7 +97,6 @@ def validar_consumos(linhas):
 
 
 def conferir_saldo(consumos, saldos):
-    """Recusa (SaldoInsuficiente) se alguma quantidade passar do saldo."""
     faltas = []
     for id_insumo, qtd in consumos:
         s = saldos.get(id_insumo)
@@ -130,7 +116,6 @@ def fmt(n):
     return texto[:-3] if texto.endswith(",00") else texto
 
 
-# ---------------- serviços ----------------
 def listar(sessao, busca="", id_unidade=None, status=None, data_ini=None, data_fim=None):
     sessao.exigir("atendimentos")
     with banco():
@@ -147,8 +132,7 @@ def obter(sessao, id_atendimento):
 
 
 def precisa_registrar_consumo(sessao, status, id_atendimento=None):
-    """True quando salvar como Realizado vai registrar consumo de insumos
-    (atendimento ainda sem consumo registrado)."""
+    """True se salvar como Realizado vai baixar insumos do estoque."""
     if status != "Realizado":
         return False
     if id_atendimento is None:
@@ -166,8 +150,7 @@ def sugerir_consumo(sessao, linhas_itens):
 
 def salvar(sessao, dados, linhas_itens, consumos=None, id_atendimento=None,
            agora=None):
-    """Grava o atendimento. 'consumos' (lista de dicionários da tela de
-    confirmação) é obrigatório quando o atendimento passa a Realizado."""
+    """Grava o atendimento; ao virar Realizado exige a lista de consumos confirmada."""
     sessao.exigir("atendimentos", editar=True)
     agora = agora or datetime.now()
     d = validar_ou_falhar(dados, CAMPOS)

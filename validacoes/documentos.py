@@ -2,17 +2,15 @@ import re
 
 
 def somente_digitos(texto):
-    """Remove tudo que não for número. Ex.: '123.456.789-09' -> '12345678909'."""
     return re.sub(r"\D", "", texto or "")
 
 
 def validar_cpf(cpf):
-    """Retorna True se o CPF tem 11 dígitos e os dígitos verificadores batem."""
     cpf = somente_digitos(cpf)
 
     if len(cpf) != 11:
         return False
-    if cpf == cpf[0] * 11:  # 11111111111, 00000000000 etc. são inválidos
+    if cpf == cpf[0] * 11:  # 111.111.111-11 passa no cálculo, mas é inválido
         return False
 
     for tamanho in (9, 10):
@@ -26,12 +24,11 @@ def validar_cpf(cpf):
 
 
 def validar_cep(cep):
-    """Retorna True se o CEP tem exatamente 8 dígitos."""
     return len(somente_digitos(cep)) == 8
 
 
 def validar_telefone(telefone):
-    """Retorna True para celular (11 dígitos) ou fixo (10 dígitos) com DDD."""
+    """Celular (11 dígitos) ou fixo (10), com DDD."""
     digitos = somente_digitos(telefone)
     if len(digitos) not in (10, 11):
         return False
@@ -43,7 +40,6 @@ def validar_telefone(telefone):
 
 
 def validar_cnpj(cnpj):
-    """Retorna True se o CNPJ tem 14 dígitos e os dígitos verificadores batem."""
     cnpj = somente_digitos(cnpj)
     if len(cnpj) != 14 or cnpj == cnpj[0] * 14:
         return False

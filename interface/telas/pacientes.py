@@ -1,5 +1,4 @@
-"""Tela Pacientes: lista com busca e inativos; cadastro e edição com as abas
-Dados, Anamnese (perfis com acesso) e Histórico de atendimentos."""
+"""Tela de pacientes, com anamnese e histórico."""
 import customtkinter as ctk
 
 from interface.componentes import (Abas, BotaoPrincipal, Campo, Cartao, Mensagem,
@@ -64,7 +63,6 @@ class TelaPacientes(TelaCadastro):
     def ativar_servico(self, id_, ativo):
         srv.definir_ativo(self.sessao, id_, ativo)
 
-    # ----- formulário com abas (só na edição) -----
     def mostrar_formulario(self, r=None, aba="dados"):
         if r is None:
             return super().mostrar_formulario(None)
@@ -88,7 +86,7 @@ class TelaPacientes(TelaCadastro):
         else:
             self.historico()
 
-    # ----- histórico -----
+    # histórico
     def historico(self):
         self.colocar_rodape(RodapeFormulario(self, lambda: self.mostrar_lista(), None,
                                              somente_leitura=True))
@@ -107,7 +105,7 @@ class TelaPacientes(TelaCadastro):
              brl(h["valor_total"]) if h["status"] == "Realizado" else "—"]
             for h in linhas])
 
-    # ----- anamnese -----
+    # anamnese
     def lista_anamneses(self, aviso=""):
         editar = self.sessao.pode_editar("anamnese")
         self.colocar_rodape(RodapeFormulario(self, lambda: self.mostrar_lista(), None,

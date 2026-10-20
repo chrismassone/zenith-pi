@@ -1,4 +1,4 @@
-"""Regras de estoque: saldo, compras e consumo avulso."""
+"""Estoque: saldo, compras e consumo avulso."""
 from datetime import datetime
 
 from repositorios import estoque as repo
@@ -56,7 +56,7 @@ def registrar_compra(sessao, dados):
 
 
 def registrar_consumo_avulso(sessao, dados, agora=None):
-    """Consumo sem atendimento (perda, descarte...): o motivo é obrigatório."""
+    """Consumo sem atendimento (perda, descarte); exige motivo."""
     sessao.exigir("insumos", editar=True)
     d = validar_ou_falhar(dados, CAMPOS_CONSUMO)
     with banco():

@@ -1,4 +1,3 @@
-"""Tradução de erros do banco para erros de negócio, comum aos serviços."""
 from contextlib import contextmanager
 
 from repositorios.base import RegistroDuplicado, RegraDoBanco
@@ -7,13 +6,7 @@ from servicos.erros import BancoIndisponivel, DadosInvalidos, ErroNegocio, Saldo
 
 @contextmanager
 def banco(duplicados=None):
-    """Envolve chamadas a repositórios:
-
-        with banco({"uq_paciente_cpf": ("cpf", "Já existe um paciente com este CPF.")}):
-            repo.inserir(...)
-
-    'duplicados' associa o nome da restrição UNIQUE ao campo e à mensagem.
-    """
+    """Traduz erros do repositório em erros de negócio. 'duplicados' = {restrição: (campo, mensagem)}."""
     try:
         yield
     except RegistroDuplicado as erro:

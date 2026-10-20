@@ -1,6 +1,4 @@
-"""Tela Financeiro (somente Gerente): período e unidade; cartões de
-faturamento, custo de locação, despesas e margem; resultado por unidade;
-faturamento x custo; faturamento por procedimento; lançamentos."""
+"""Tela Financeiro (só Gerente)."""
 from datetime import date
 
 import customtkinter as ctk
@@ -156,7 +154,7 @@ class TelaFinanceiro(TelaBase):
                       l["descricao"], brl(l["valor"])] for l in d["lancamentos"]],
                     d["lancamentos"])
 
-    # ----- formulário de lançamento -----
+    # formulário de lançamento
     def form_lancamento(self, l=None):
         self.limpar()
         self.cabecalho.trocar("Editar lançamento" if l else "Novo lançamento", "")

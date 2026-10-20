@@ -1,5 +1,4 @@
-"""Tela Insumos: abas Estoque, Compras e consumos, Insumos (cadastro) e
-Fornecedores."""
+"""Tela Insumos: estoque, compras e consumos, cadastro e fornecedores."""
 from datetime import date
 
 import customtkinter as ctk
@@ -32,7 +31,7 @@ class TelaInsumos(TelaBase):
         self.ver = "compras"
         self.trocar_aba("estoque")
 
-    # ----- infraestrutura das abas -----
+    # infraestrutura das abas
     def _nova_area(self):
         if self.area is not None:
             self.area.destroy()
@@ -58,7 +57,7 @@ class TelaInsumos(TelaBase):
         else:
             self.mostrar_movimentos()
 
-    # ----- aba Estoque -----
+    # aba estoque
     def mostrar_estoque(self):
         area = self._nova_area()
         area.grid_rowconfigure(2, weight=1)
@@ -105,7 +104,7 @@ class TelaInsumos(TelaBase):
               situacao(r)] for r in linhas],
             vazio="Nenhum insumo em alerta." if self.so_alertas else "Nenhum insumo encontrado.")
 
-    # ----- aba Compras e consumos -----
+    # aba compras e consumos
     def mostrar_movimentos(self, aviso=""):
         area = self._nova_area()
         area.grid_rowconfigure(2, weight=1)
@@ -165,7 +164,7 @@ class TelaInsumos(TelaBase):
         tabela.grid(row=0, column=0, sticky="nsew")
         tabela.preencher(dados)
 
-    # ----- formulários de compra e consumo avulso -----
+    # formulários de compra e consumo avulso
     def _formulario(self, titulo, campos, ao_salvar):
         area = self._nova_area()
         self.cabecalho.trocar(titulo, "")

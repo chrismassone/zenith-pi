@@ -1,4 +1,3 @@
-"""SQL da tabela profissional."""
 from repositorios.base import consultar
 
 

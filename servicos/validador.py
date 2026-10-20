@@ -1,8 +1,4 @@
-"""Validação declarativa dos dados de formulário.
-
-Cada serviço descreve seus campos com Campo(...) e chama validar(), que
-devolve os valores já convertidos e um dicionário de erros por campo.
-"""
+"""Validação dos campos de formulário."""
 from dataclasses import dataclass, field
 import re
 
@@ -15,11 +11,11 @@ class Campo:
     chave: str
     rotulo: str
     tipo: str = "texto"      # texto, data, hora, decimal, inteiro, cpf, cnpj, cep,
-                             # telefone, email, uf, escolha, id
+                             # telefone, email, uf, escolha ou id
     obrigatorio: bool = True
-    maximo: int = None       # tamanho máximo (texto)
-    minimo: object = None    # valor mínimo (decimal / inteiro)
-    opcoes: tuple = field(default_factory=tuple)   # para tipo "escolha"
+    maximo: int = None
+    minimo: object = None
+    opcoes: tuple = field(default_factory=tuple)
     maior_que_zero: bool = False
 
 
@@ -28,7 +24,6 @@ def _vazio(valor):
 
 
 def _converter(c, bruto):
-    """Devolve (valor, mensagem_de_erro)."""
     if c.tipo == "texto":
         texto = str(bruto).strip()
         if c.maximo and len(texto) > c.maximo:
@@ -84,7 +79,7 @@ def _converter(c, bruto):
 
 
 def validar(dados, campos):
-    """Devolve (limpos, erros). Campos opcionais vazios viram None."""
+    """Devolve (valores convertidos, erros por campo)."""
     limpos, erros = {}, {}
     for c in campos:
         bruto = dados.get(c.chave)
@@ -101,8 +96,7 @@ def validar(dados, campos):
 
 
 def validar_ou_falhar(dados, campos, extra=None):
-    """Como validar(), mas levanta DadosInvalidos se houver qualquer erro.
-    'extra' recebe os limpos e devolve erros adicionais {campo: mensagem}."""
+    """Igual a validar(), mas levanta DadosInvalidos. 'extra' adiciona regras."""
     limpos, erros = validar(dados, campos)
     if extra and not erros:
         erros.update(extra(limpos) or {})

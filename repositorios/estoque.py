@@ -1,4 +1,3 @@
-"""SQL de estoque: views de saldo e validade, compras e consumos."""
 from repositorios.base import consultar, executar
 
 

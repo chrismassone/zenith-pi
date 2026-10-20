@@ -4,7 +4,6 @@ from config import DB_CONFIG
 
 
 def conectar():
-    """Abre uma conexão com o banco. Quem chamar deve fechá-la."""
     try:
         return mysql.connector.connect(**DB_CONFIG)
     except Error as erro:

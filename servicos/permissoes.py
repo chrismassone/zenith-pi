@@ -1,9 +1,4 @@
-"""Quem acessa o quê, por perfil. Única fonte da regra: o menu, as telas e
-os serviços consultam este módulo.
-
-Níveis: "ler" (consulta) ou "editar" (consulta, inclusão, alteração e
-inativação). Módulo ausente = sem acesso (o menu esconde).
-"""
+"""Acesso por perfil: 'ler' ou 'editar'. Módulo ausente = sem acesso."""
 GERENTE, ATENDENTE, PROFISSIONAL = "Gerente", "Atendente", "Profissional"
 PERFIS = (GERENTE, ATENDENTE, PROFISSIONAL)
 
@@ -18,9 +13,9 @@ ACESSO = {
         "inicio": LER,
         "pacientes": EDITAR,
         "atendimentos": EDITAR,
-        "insumos": EDITAR,          # inclui fornecedores, compras e consumo avulso
+        "insumos": EDITAR,
         "procedimentos": EDITAR,
-        "unidades": LER,            # só leitura
+        "unidades": LER,
     },
     PROFISSIONAL: {
         "inicio": LER,
@@ -29,8 +24,7 @@ ACESSO = {
         "anamnese": EDITAR,
     },
 }
-# SUPOSIÇÃO: a anamnese (dado de saúde) não aparece para a Atendente,
-# porque não foi listada no perfil dela.
+# suposição: a Atendente não vê a anamnese (não constava no perfil dela)
 
 
 def nivel(perfil, modulo):

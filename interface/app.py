@@ -1,5 +1,4 @@
-"""Janela principal: login, menu lateral (filtrado pelo perfil), área das
-telas, botão Sair e expiração da sessão por inatividade."""
+"""Janela principal: login, menu por perfil e troca de telas."""
 from tkinter import TclError
 
 import customtkinter as ctk
@@ -16,7 +15,7 @@ from interface.telas.insumos import TelaInsumos
 from interface.telas.login import TelaLogin
 from interface.telas.pacientes import TelaPacientes
 
-# (chave = módulo de servicos.permissoes, texto, tela)
+# (módulo em servicos.permissoes, texto, tela)
 MENU = [
     ("inicio", "Início", TelaInicio),
     ("pacientes", "Pacientes", TelaPacientes),
@@ -32,8 +31,6 @@ MSG_EXPIROU = "Sua sessão expirou por inatividade. Entre novamente."
 
 
 class ItemMenu(ctk.CTkFrame):
-    """Item do menu lateral. O estado ativo não depende só da cor:
-    fundo branco, texto em negrito e marcador dourado."""
 
     def __init__(self, master, texto, comando=None):
         super().__init__(master, fg_color="transparent")
@@ -69,14 +66,12 @@ class Janela(ctk.CTk):
         self.geometry(Medida.JANELA)
         self.minsize(*Medida.JANELA_MIN)
         self._definir_icone()
-        # ocupa a área útil da tela (sem cobrir a barra de tarefas)
         self.after(0, self._maximizar)
         self.sessao = None
         self.raiz = None
         self.bind_all("<Any-KeyPress>", self._atividade, add="+")
         self.bind_all("<Any-ButtonPress>", self._atividade, add="+")
-        # Um único tratador da roda para a janela inteira (ver AreaRolavel em
-        # componentes.py): nenhuma área registra tratador global próprio.
+        # um único tratador da roda para a janela toda (ver AreaRolavel)
         self.bind_all("<MouseWheel>", self._rolar, add="+")
         self.mostrar_login()
 
@@ -96,7 +91,7 @@ class Janela(ctk.CTk):
                 self.iconbitmap(str(icone))
             except TclError:
                 pass
-        # o CustomTkinter troca o ícone ~200 ms após abrir; aplicamos depois
+        # o CustomTkinter troca o ícone logo depois de abrir
         self.after(300, aplicar)
 
     def _trocar_raiz(self, widget):
@@ -105,7 +100,7 @@ class Janela(ctk.CTk):
         self.raiz = widget
         widget.pack(fill="both", expand=True)
 
-    # ---------- sessão ----------
+    # sessão
     def mostrar_login(self, aviso=""):
         self.sessao = None
         self._trocar_raiz(TelaLogin(self, self.entrou, aviso))
@@ -117,8 +112,7 @@ class Janela(ctk.CTk):
         self.after(VERIFICAR_SESSAO_MS, self._verificar_sessao)
 
     def _rolar(self, evento):
-        """Rola a área rolável sob o mouse (a mais interna que ainda pode
-        rolar naquele sentido) um passo de Medida.ROLAGEM_PASSO pixels."""
+        """Rola a área sob o mouse que ainda pode rolar naquele sentido."""
         self._atividade()
         try:
             alvo = self.winfo_containing(evento.x_root, evento.y_root)
@@ -160,7 +154,7 @@ class Janela(ctk.CTk):
             self.sessao.encerrar()
         self.mostrar_login()
 
-    # ---------- estrutura principal ----------
+    # estrutura principal
     def _montar_principal(self):
         raiz = ctk.CTkFrame(self, fg_color=Cor.FUNDO, corner_radius=0)
         self._trocar_raiz(raiz)
@@ -195,7 +189,7 @@ class Janela(ctk.CTk):
         linha = 0
         for chave, texto, _ in MENU:
             if not self.sessao.pode_ver(chave):
-                continue          # o menu esconde o que o perfil não acessa
+                continue
             item = ItemMenu(nav, texto, comando=lambda c=chave: self.mostrar(c))
             item.grid(row=linha, column=0, sticky="ew", pady=(0, Espaco.XS))
             self.itens[chave] = item
@@ -214,7 +208,7 @@ class Janela(ctk.CTk):
                      font=Fonte.pequeno, text_color=Cor.TEXTO_SECUNDARIO, anchor="w",
                      justify="left", wraplength=Medida.RODAPE_MENU_TEXTO).pack(fill="x")
 
-    # ---------- navegação ----------
+    # navegação
     def mostrar(self, chave):
         if self.sessao is None or not self.sessao.ativa():
             self.sessao_expirou()

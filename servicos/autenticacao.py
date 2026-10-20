@@ -1,5 +1,4 @@
-"""Login com e-mail e senha (bcrypt), bloqueio temporário após tentativas
-erradas e criação de usuários. Nunca registra nem devolve senhas."""
+"""Login (bcrypt), bloqueio por tentativas e criação de usuários."""
 from datetime import datetime, timedelta
 import re
 
@@ -11,13 +10,12 @@ from servicos.erros import BancoIndisponivel, DadosInvalidos, LoginRecusado, obr
 from servicos.sessao import Sessao
 
 MAX_TENTATIVAS = 5
-TEMPO_BLOQUEIO = timedelta(minutes=15)   # SUPOSIÇÃO: duração do bloqueio
+TEMPO_BLOQUEIO = timedelta(minutes=15)   # suposição, a confirmar
 SENHA_MINIMA = 10
 MSG_GENERICA = "E-mail ou senha incorretos."
 MSG_BLOQUEIO = ("Acesso bloqueado temporariamente por excesso de tentativas. "
                 "Tente novamente em alguns minutos.")
-# hash de referência: quando o e-mail não existe, a resposta leva o mesmo
-# tempo de uma senha errada (não revela quais e-mails estão cadastrados)
+# usado quando o e-mail não existe, para a resposta levar o mesmo tempo
 _HASH_REFERENCIA = bcrypt.hashpw(b"referencia-sem-uso", bcrypt.gensalt()).decode("ascii")
 
 
@@ -38,8 +36,7 @@ def senha_confere(senha, senha_hash):
 
 
 def entrar(email, senha, repo=None, relogio=datetime.now):
-    """Confere as credenciais. Devolve uma Sessao ou levanta LoginRecusado
-    (mensagem genérica) ou BancoIndisponivel."""
+    """Devolve uma Sessao ou levanta LoginRecusado / BancoIndisponivel."""
     repo = repo or _repo()
     email = (email or "").strip().lower()
     if not email or not senha:

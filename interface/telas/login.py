@@ -1,4 +1,3 @@
-"""Tela de login: cartão centralizado com o monograma, E-mail, Senha e Entrar."""
 import customtkinter as ctk
 
 from interface import tema

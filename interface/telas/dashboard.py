@@ -1,23 +1,20 @@
-"""Tela Dashboard (somente Gerente): espelho do Power BI. Lê só as views
-vw_* (via servicos.relatorios.dashboard), com os filtros Unidade, Período
-e Procedimento aplicados a todos os visuais."""
+"""Dashboard: lê as mesmas views do Power BI."""
 from datetime import date
 
 import customtkinter as ctk
 import matplotlib
-matplotlib.use("Agg")   # o desenho vai para o Tk pelo FigureCanvasTkAgg
-from matplotlib import font_manager                              # noqa: E402
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg   # noqa: E402
-from matplotlib.figure import Figure                             # noqa: E402
+from matplotlib import font_manager
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 
-from interface import tema                                       # noqa: E402
-from interface.componentes import (Cartao, Mensagem, Seletor, Tabela, caixa_rolagem,  # noqa: E402
+from interface import tema
+from interface.componentes import (Cartao, Mensagem, Seletor, Tabela, caixa_rolagem,
                                    grade_kpis)
-from interface.formatos import (brl, formatar_data, formatar_telefone, mes_curto, mes_extenso, numero,  # noqa: E402
+from interface.formatos import (brl, formatar_data, formatar_telefone, mes_curto, mes_extenso, numero,
                                 percentual)
-from interface.tema import Cor, Espaco, Fonte, Medida             # noqa: E402
-from interface.telas.base import FALHOU, TelaBase                 # noqa: E402
-from servicos import cadastros, relatorios as srv                 # noqa: E402
+from interface.tema import Cor, Espaco, Fonte, Medida
+from interface.telas.base import FALHOU, TelaBase
+from servicos import cadastros, relatorios as srv
 
 
 def _configurar_fonte():
@@ -111,7 +108,7 @@ class TelaDashboard(TelaBase):
         d = self.chamar(srv.dashboard, f["de"], f["ate"], f["unidade"], f["procedimento"])
         if d is FALHOU:
             return
-        self.dados = d   # usado pelo teste que compara com o SQL
+        self.dados = d
         por_un = " · ".join(f"{n.replace('Unidade ', '')} {brl(v)}"
                             for n, v in d["faturamento_por_unidade"])
         kpis = [
@@ -167,7 +164,7 @@ class TelaDashboard(TelaBase):
                      anchor="w").grid(row=linha, column=0, columnspan=2, sticky="ew",
                                       pady=(Espaco.XL, Espaco.M))
 
-    # ----- gráficos -----
+    # gráficos
     def _grafico(self, linha, coluna, titulo, desenhar, d):
         cartao = Cartao(self.area)
         cartao.grid(row=linha, column=coluna, sticky="nsew", pady=(Espaco.L, 0),
@@ -182,9 +179,7 @@ class TelaDashboard(TelaBase):
         canvas = FigureCanvasTkAgg(fig, master=cartao)
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True, padx=Espaco.M, pady=Espaco.M)
-        # O matplotlib prende um tratador da roda na janela principal e ele
-        # continua ativo depois que a tela muda. Os gráficos não usam a roda;
-        # a rolagem é feita pelo tratador único da janela (Janela._rolar).
+        # o matplotlib prende um tratador da roda na janela, que sobrevive à tela
         self.winfo_toplevel().unbind("<MouseWheel>")
         self._figuras.append(fig)
 
@@ -207,7 +202,6 @@ class TelaDashboard(TelaBase):
                label="Locação + despesas")
         ax.set_xticks(list(x), nomes)
         ax.yaxis.set_major_formatter(_milhar)
-        # espaço livre no topo para a legenda não cobrir as colunas
         ax.set_ylim(0, max(fat + custo + [1]) * Medida.GRAFICO_FOLGA_TOPO)
         ax.legend(frameon=False, loc="upper left", ncol=2,
                   fontsize=Medida.GRAFICO_FONTE_PEQUENA)
