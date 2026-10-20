@@ -1,25 +1,25 @@
 @echo off
 cd /d "%~dp0"
-echo === Testes de logica (sem banco) ===
-python teste_validacoes.py
-python teste_formatos.py
-python teste_login.py
+echo === Sem banco ===
+python -m testes.teste_validacoes
+python -m testes.teste_formatos
+python -m testes.teste_login
 echo.
-echo === Banco principal zenith (somente leitura) ===
-python teste_conexao.py
-python popular_validar.py
-python consultas_executar.py
-python teste_dashboard.py
+echo === Banco zenith (somente leitura) ===
+python -m testes.teste_conexao
+python -m ferramentas.popular_validar
+python -m ferramentas.consultas_executar
+python -m testes.teste_dashboard
 echo.
-echo === Banco de TESTE zenith_teste (grava e apaga) ===
-python popular_validar.py --teste
-python teste_paciente.py
-python teste_servicos.py
-python teste_retorno_agenda.py
+echo === Banco zenith_teste (grava e apaga) ===
+python -m ferramentas.popular_validar --teste
+python -m testes.teste_paciente
+python -m testes.teste_servicos
+python -m testes.teste_retorno_agenda
 echo.
-echo === Interface (abre a janela; nao mexa no mouse/teclado) ===
-python teste_rolagem.py
-python teste_fluxo_pacientes.py
-python teste_fluxo_interface.py
+echo === Interface (abre a janela; nao mexa no mouse) ===
+python -m testes.teste_rolagem
+python -m testes.teste_fluxo_pacientes
+python -m testes.teste_fluxo_interface
 echo.
 pause
