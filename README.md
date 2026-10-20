@@ -1,97 +1,86 @@
 # Zenith
 
-Sistema desktop de gestão do consultório de harmonização orofacial da
-Dra. Gabriela Saraiva, desenvolvido como Projeto Integrador da FATEC.
+Sistema desktop para o consultório de harmonização orofacial da
+Dra. Gabriela Saraiva. Projeto Integrador da FATEC.
 
-Reúne o cadastro de pacientes (com anamnese e histórico), a agenda e o registro
-de atendimentos nas três unidades, o catálogo de procedimentos com os insumos
-usados em cada um, o controle de estoque (compras, consumo, validade), o
-financeiro e um painel gerencial com os mesmos números do Power BI.
+Cadastro de pacientes (com anamnese e histórico), agenda e atendimentos nas três
+unidades, procedimentos com os insumos que cada um consome, estoque (compras,
+consumo e validade), financeiro e um painel com os mesmos números do Power BI.
 
-**Todos os dados do repositório são fictícios.**
+Todos os dados do repositório são fictícios.
+
+## Entrega de Banco de Dados
+
+- **[`banco/`](banco/)**: script SQL de criação, população e consultas, e a
+  verificação dos requisitos (5+ tabelas, tabela principal com 100+ linhas).
+  Comece pelo [`banco/README.md`](banco/README.md).
+- [Modelo de dados e correções pedidas pelo professor](docs/banco_de_dados.md)
+- [Requisitos e orientações dos professores](docs/requisitos_professores.md)
+- [Power BI: views e medidas](docs/powerbi.md)
 
 ## Requisitos
 
 - Windows
 - Python 3.14
-- MySQL 8.0.47 (MySQL Workbench para rodar os scripts como root)
-- Bibliotecas Python: ver `requirements.txt` (instaladas pelo `instalar.bat`)
+- MySQL 8.0.47 (e o MySQL Workbench)
 
 ## Instalação
 
-1. Instale as dependências: dê dois cliques em `instalar.bat`
-   (ou `python -m pip install -r requirements.txt`).
-2. Copie `.env.example` para `.env` e preencha a conexão do usuário `zenith_app`.
-   O `.env` **nunca** vai para o Git.
+1. Rode `instalar.bat` (ou `python -m pip install -r requirements.txt`).
+2. Copie `.env.example` para `.env` e preencha os dados do usuário `zenith_app`.
+   O `.env` não vai para o Git.
 
-## Criar o banco
+## Banco de dados
 
-> **Atenção:** `banco/zenith_completo.sql` **apaga e recria** o schema `zenith`.
-> Faça backup antes, se houver dados que você queira manter:
-> `mysqldump -u root -p --routines --triggers --databases zenith > zenith_backup.sql`
+`banco/zenith_completo.sql` apaga e recria o schema `zenith`. Se houver dados a
+manter, faça backup antes:
 
-1. No MySQL Workbench, conectado como **root**, abra e execute
-   `banco/zenith_completo.sql`. Ele cria a estrutura (tabelas, gatilhos e
-   views), carrega os dados fictícios e roda as consultas de conferência.
-2. Abra `banco/zenith_permissoes.sql`, troque cada `TROQUE_ESTA_SENHA` por uma
-   senha própria e execute como root. Isso cria os usuários do MySQL
-   `zenith_app` (aplicativo) e `zenith_bi` (Power BI, só leitura). Não salve o
-   arquivo com as senhas.
+```
+mysqldump -u root -p --routines --triggers --databases zenith > zenith_backup.sql
+```
 
-## Criar usuários do sistema
+1. No Workbench, como root, execute `banco/zenith_completo.sql`.
+2. Em `banco/permissoes.sql`, troque `TROQUE_ESTA_SENHA` pelas senhas de
+   `zenith_app` (a mesma do `.env`) e `zenith_bi` (Power BI) e execute como root.
 
-O script do banco **não** cria usuários do sistema. Para criar o primeiro
-Gerente (e os demais usuários):
+## Usuários do sistema
+
+O script do banco não cria usuários. Para criar o primeiro Gerente:
 
 ```
 python criar_usuario.py
 ```
 
-O script pede nome, e-mail e perfil (Gerente, Atendente ou Profissional). A
-senha é digitada sem aparecer, precisa ter pelo menos 10 caracteres e é guardada
-só como hash bcrypt.
+A senha é digitada sem aparecer na tela e guardada só como hash (bcrypt).
 
-## Iniciar
+## Uso
 
-Dê dois cliques em `iniciar.bat` (ou rode `python main.py`) e entre com o e-mail
-e a senha criados.
+Rode `iniciar.bat` (ou `python main.py`) e entre com e-mail e senha.
 
 ## Testes
 
-`testar.bat` roda todos os testes. Os que gravam dados usam só o schema
-separado `zenith_teste` (criado por `banco/teste/zenith_banco_teste.sql`) e
-apagam o que criam.
+`testar.bat` roda todos. Os que gravam usam o schema separado `zenith_teste`
+(criado por `banco/teste/zenith_banco_teste.sql`) e apagam o que criam.
 
-## Estrutura de pastas
+## Estrutura
 
 ```
-.
-├── main.py                 ponto de entrada (abre a janela)
-├── config.py               lê a conexão do .env
-├── interface/              telas (CustomTkinter), componentes e tema visual
-│   └── telas/              login, início, pacientes, atendimentos, cadastros,
-│                           insumos, financeiro e dashboard
-├── servicos/               regras de negócio (login, perfis, atendimentos, estoque...)
-├── repositorios/           acesso ao banco (somente SQL parametrizado)
-├── validacoes/             CPF, CNPJ, CEP, telefone, datas e valores
-├── database/               conexão com o MySQL
-├── banco/
-│   ├── zenith_completo.sql     criação + população + consultas (rodar como root)
-│   ├── zenith_permissoes.sql   usuários do MySQL (senhas a preencher)
-│   ├── historico/              fontes do script completo (estrutura, dados, consultas)
-│   └── teste/                  scripts do schema de testes zenith_teste
-├── docs/                   documentação, entrega, modelo de dados, Power BI e prints
-├── assets/                 logos, ícone e fonte Montserrat
-├── popular_gerar.py        gera os dados fictícios (semente fixa)
-├── gerar_sql_completo.py   monta banco/zenith_completo.sql a partir das fontes
-├── criar_usuario.py        cria usuários do sistema
-└── teste_*.py              testes automatizados
+main.py, config.py, criar_usuario.py, *.bat
+interface/     telas e componentes (CustomTkinter)
+servicos/      regras de negócio
+repositorios/  acesso ao banco (SQL parametrizado)
+validacoes/    CPF, CNPJ, CEP, telefone, datas e valores
+database/      conexão
+assets/        logos, ícone e fonte
+banco/         scripts SQL da entrega, verificação dos requisitos e permissões
+ferramentas/   geração e conferência dos dados, figuras das consultas
+testes/        testes automatizados
+docs/          material da disciplina e Power BI
 ```
 
-## Documentação
+Para regenerar `banco/zenith_completo.sql` depois de mudar `1_criacao.sql`,
+`2_populacao.sql` ou `3_consultas.sql`:
 
-- [Requisitos e orientações dos professores](docs/requisitos_professores.md)
-- [Entrega 2](docs/entrega2.md)
-- [Modelo de dados (DER, cardinalidades, dicionário)](docs/modelo_dados.md)
-- [Views e medidas do Power BI](docs/powerbi_views.md)
-- [Resultados das consultas](docs/resultados_consultas.md) e [prints](docs/prints/)
+```
+python -m ferramentas.gerar_sql_completo
+```

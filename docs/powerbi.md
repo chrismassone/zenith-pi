@@ -1,4 +1,4 @@
-# Zenith - Views para o Power BI
+# Power BI
 
 O Power BI e a tela Dashboard do aplicativo leem **as mesmas views**. Por isso
 os números são idênticos nos dois lugares. Nenhum cálculo de negócio deve ser
@@ -56,17 +56,8 @@ Por paciente ativo e procedimento com `intervalo_retorno_dias` definido:
 | pendente | vencido **E** não retornou. Retorno ainda não vencido **não** é pendente |
 | taxa de retorno | vencidos que retornaram ÷ vencidos |
 
-A view `vw_dash_retorno` já entrega a coluna `vencido` calculada com `< CURDATE()`.
-**No Power BI, não recalcule com `TODAY()`**: use a coluna `vencido` da view. Uma
-medida com `<= TODAY()` conta como vencido o retorno previsto para hoje e diverge
-do aplicativo.
-
-**Por que apareciam 107 "pendentes":** a medida contava todo par
-paciente/procedimento com `retornou = 0`, inclusive retornos que ainda não
-venceram (datas previstas até julho de 2027). Pela regra única, pendente exige
-`vencido = 1`. No banco de trabalho, antes da agenda futura: 107 sem retorno,
-mas só 24 pendentes vencidos. Com a agenda futura (53 Agendado novos), 13
-pendentes vencidos e taxa de 81,4%.
+A coluna `vencido` já vem calculada da view. Não recalcule com `TODAY()` no
+Power BI, para os números baterem com o aplicativo.
 
 ### Medidas DAX
 
@@ -102,14 +93,6 @@ DIVIDE ( [Retornos vencidos que retornaram], [Retornos vencidos] )
 A taxa é sempre `DIVIDE` de contagens. Nunca some nem tire média de taxas
 (por unidade ou por mês): com filtros, o Power BI recalcula a divisão no
 contexto certo.
-
-## Agenda futura
-
-A população inclui 64 atendimentos Agendado em 15 dias úteis, de 19/10/2026 a
-09/11/2026, sem fins de semana e sem o feriado de 02/11/2026 (Finados). São de 2
-a 5 por dia, exceto 19/10, que já tinha 7 na carga original. Agendados não têm
-valor faturado, forma de pagamento nem consumo de insumo. Eles aparecem na agenda
-(consulta [01]) e contam como "retornou" para quem tinha retorno pendente.
 
 ## Filtros (segmentações) usados no dashboard
 

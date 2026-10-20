@@ -1,21 +1,40 @@
-# Zenith - Modelo de dados (versão 2.0)
+# Banco de dados do Zenith
 
-Banco MySQL 8, conjunto de caracteres utf8mb4. Script: `zenith_banco.sql`.
+Material da entrega de Banco de Dados (antes no apêndice do relatório).
+MySQL 8, utf8mb4. Todos os dados são fictícios.
 
-Convenções usadas em todo o modelo:
+A resposta direta ao enunciado (scripts e verificação dos requisitos) está em
+[`banco/README.md`](../banco/README.md).
 
-- Chave primária substituta inteira (`id_...`) em todas as entidades;
-  `procedimento_insumo` usa chave composta (id_procedimento, id_insumo).
-- `criado_em` e `atualizado_em` em todas as tabelas (auditoria e futura versão web).
-- Exclusão lógica (`ativo`) em paciente, usuario, insumo, procedimento, unidade,
-  fornecedor e profissional. Nenhum cadastro é apagado fisicamente.
-- Regras garantidas pelo próprio banco (CHECK, FK, UNIQUE e gatilhos de saldo),
-  não só pelo aplicativo.
-- Nenhuma senha é guardada em texto: `usuario.senha_hash` guarda o hash bcrypt.
+| Arquivo | Conteúdo |
+|---|---|
+| [`banco/zenith_completo.sql`](../banco/zenith_completo.sql) | **Script entregue**: criação, população e consultas em um arquivo |
+| [`banco/1_criacao.sql`](../banco/1_criacao.sql), [`2_populacao.sql`](../banco/2_populacao.sql), [`3_consultas.sql`](../banco/3_consultas.sql) | As três partes separadas |
+| [`banco/4_verificacao_requisitos.sql`](../banco/4_verificacao_requisitos.sql) | Confere 5+ tabelas e 100+ linhas |
+| [`docs/prints/`](prints/) | Resultado das consultas usadas nas figuras |
 
----
+## 1. Requisitos da entrega
 
-## 1. Entidades e atributos
+| Requisito | Como foi atendido |
+|---|---|
+| Implementação em SGBD relacional | MySQL 8.0.47 |
+| Script de criação, população e consultas | `banco/zenith_completo.sql` (14 tabelas, 12 views, 3 gatilhos, população e 20 consultas) |
+| Pelo menos 5 tabelas | 14 tabelas |
+| Tabela principal com pelo menos 100 linhas | paciente 126, atendimento 314, atendimento_procedimento 383, compra 146, consumo 1.432 |
+| Consultas operacionais e gerenciais | 20 consultas (seção 7), com JOIN de 3+ tabelas, subconsultas e GROUP BY/HAVING |
+
+## 2. Correções pedidas pelo professor
+
+| Correção | Como ficou no modelo |
+|---|---|
+| Colocar as cardinalidades mínimas no DER | Todos os relacionamentos com (mín,máx) dos dois lados e a justificativa de cada mínima (seção 4) |
+| Movimentação de estoque é relacionamento | A entidade MOVIMENTACAO_ESTOQUE saiu. A entrada virou a entidade associativa **COMPRA** (Fornecedor x Insumo) e a saída, **CONSUMO** (Insumo x Atendimento). O saldo é calculado (compras − consumos) na view `vw_estoque_atual` |
+| Atributos sem elipses | Atributos listados dentro de cada entidade (seção 3) |
+| Um insumo é sempre comprado do mesmo fornecedor? | Não necessariamente: FORNECEDOR e INSUMO são N:M por meio de COMPRA, que guarda fornecedor, lote, validade e preço de cada compra |
+| Quanto cada procedimento consome de insumo? | **PROCEDIMENTO_INSUMO** guarda a quantidade padrão por procedimento. O consumo real de cada atendimento fica em CONSUMO, e os dois são comparados na consulta [14] |
+| Item 6.5 (normalização) | Removido do relatório, como orientado |
+
+## 3. Entidades e atributos
 
 Atributos listados dentro de cada entidade. PK = chave primária,
 FK = chave estrangeira, UQ = valor único.
@@ -188,15 +207,13 @@ A antiga entidade MOVIMENTACAO_ESTOQUE deixou de existir. A entrada de estoque
 agora é o relacionamento COMPRA e a saída é o relacionamento CONSUMO. O saldo de
 cada insumo é calculado (compras menos consumos), não armazenado.
 
----
-
-## 2. Relacionamentos e cardinalidades
+## 4. Relacionamentos e cardinalidades
 
 Notação (min,max) lida assim: "uma ocorrência da entidade da esquerda se
 relaciona com (min,max) ocorrências da entidade da direita".
 
 | # | Relacionamento | Lado A | Lado B | Justificativa das mínimas |
-|---|---|---|---|---|
+||||||
 | R1 | PACIENTE **realiza** ATENDIMENTO | Paciente (0,n) atendimentos | Atendimento (1,1) paciente | Um paciente pode estar cadastrado sem nenhum atendimento ainda (mínima 0). Todo atendimento é de exatamente um paciente (mínima 1). |
 | R2 | PROFISSIONAL **executa** ATENDIMENTO | Profissional (0,n) atendimentos | Atendimento (1,1) profissional | Uma profissional recém-cadastrada não tem atendimentos (0). Todo atendimento tem uma responsável (1). |
 | R3 | UNIDADE **sedia** ATENDIMENTO | Unidade (0,n) atendimentos | Atendimento (1,1) unidade | Uma unidade nova ainda não tem atendimentos (0). Todo atendimento acontece em uma unidade (1). |
@@ -209,22 +226,10 @@ relaciona com (min,max) ocorrências da entidade da direita".
 | R10 | UNIDADE **tem** LANCAMENTO | Unidade (0,n) lançamentos | Lançamento (0,1) unidade | Uma unidade pode não ter despesas lançadas (0). Um lançamento pode ser geral, sem unidade, como contador ou software (0). |
 | R11 | USUARIO **corresponde a** PROFISSIONAL | Usuário (0,1) profissional | Profissional (0,1) usuário | Só usuários com perfil Profissional se ligam a um cadastro de profissional (0). Uma profissional pode ainda não ter acesso ao sistema (0). |
 
-**Como o modelo responde às perguntas do professor**
-
-- *"Um insumo sempre é comprado do mesmo fornecedor?"* Não necessariamente. Por
-  isso FORNECEDOR e INSUMO estão em N:M (R6), e cada compra registra o seu
-  fornecedor, lote, validade e preço.
-- *"Quanto cada procedimento consome de insumo?"* A resposta inicial está em
-  PROCEDIMENTO_INSUMO.quantidade_padrao (R5). O que foi de fato usado em cada
-  atendimento fica em CONSUMO.quantidade (R7), e as duas informações podem ser
-  comparadas.
-
----
-
-## 3. Dicionário de dados - PACIENTE
+## 5. Dicionário de dados: PACIENTE
 
 | Coluna | Tipo | Nulo | Padrão | Restrição | Descrição |
-|---|---|---|---|---|---|
+|||||||
 | id_paciente | INT | Não | auto | PK | Identificador do paciente |
 | nome_completo | VARCHAR(100) | Não | | | Nome completo |
 | cpf | CHAR(11) | Não | | UQ; CHECK 11 dígitos | CPF só com dígitos; o aplicativo valida os dígitos verificadores |
@@ -240,9 +245,7 @@ relaciona com (min,max) ocorrências da entidade da direita".
 | criado_em | DATETIME | Não | agora | | Data e hora do cadastro |
 | atualizado_em | DATETIME | Não | agora | atualiza sozinho | Data e hora da última alteração |
 
----
-
-## 4. Esquema de relações
+## 6. Esquema de relações
 
 Chave primária sublinhada com `_..._`; `FK ->` indica a tabela referenciada.
 
@@ -261,9 +264,7 @@ Chave primária sublinhada com `_..._`; `FK ->` indica a tabela referenciada.
 - CONSUMO(_id_consumo_, id_insumo FK -> INSUMO, id_atendimento FK -> ATENDIMENTO (opcional), quantidade, data_consumo, observacao, criado_em, atualizado_em)
 - LANCAMENTO(_id_lancamento_, id_unidade FK -> UNIDADE (opcional), categoria, descricao, valor, data_lancamento, tipo, criado_em, atualizado_em)
 
----
-
-## 5. Diagrama (Mermaid, apoio para redesenhar no MyArchitect)
+### Diagrama
 
 O Mermaid desenha pés de galinha (crow's foot). As cardinalidades (min,max)
 oficiais estão na tabela da seção 2; use-as no DER do relatório.
@@ -392,9 +393,50 @@ erDiagram
 (criado_em e atualizado_em existem em todas as tabelas e foram omitidos do
 diagrama para não poluir.)
 
----
+## 7. Consultas
 
-## 6. Views
+As 20 consultas estão no fim de `banco/zenith_completo.sql` (e em
+`banco/3_consultas.sql`).
+
+| Nº | Consulta |
+|---|---|
+| 01 | Agenda por unidade e período (JOIN de 5 tabelas) |
+| 02 | Retornos pendentes: prazo de retorno vencido e paciente sem novo |
+| 03 | Faturamento, custo de locação, despesas e margem por unidade e mês |
+| 04 | Faturamento por procedimento no período (GROUP BY) |
+| 05 | Ticket médio por unidade (só atendimentos Realizado) |
+| 06 | Pacientes ativos por cidade e bairro, só bairros com 3 ou mais |
+| 07 | Taxa de comparecimento por unidade |
+| 08 | Estoque atual de todos os insumos ativos, com alerta de mínimo |
+| 09 | Alertas de validade: lotes vencidos ou que vencem em até 60 dias |
+| 10 | Custo estimado de insumos por procedimento e margem estimada |
+| 11 | Ranking de origem de captação dos pacientes (GROUP BY com HAVING |
+| 12 | Novos pacientes por mês (pela data de cadastro) |
+| 13 | Histórico de atendimentos de um paciente (JOIN de 4 tabelas) |
+| 14 | Consumo real x quantidade padrão por procedimento e insumo |
+| 15 | Compras por fornecedor e insumo (JOIN de 3 tabelas): mostra que o |
+| 16 | Pacientes ativos sem nenhum atendimento realizado nos últimos 180 dias |
+| 17 | Procedimentos com faturamento acima da média dos procedimentos |
+| 18 | Insumos cujo preço da última compra ficou acima do preço médio |
+| 19 | Faturamento por forma de pagamento (GROUP BY com HAVING |
+| 20 | Faturamento mensal total (base do gráfico de linha do dashboard) |
+
+### Resultados usados nas figuras do relatório
+
+Resultados reais das consultas de `banco/consultas_figuras.sql`, desenhados
+como tabela.
+
+| Figura | Arquivo |
+|---|---|
+| 6. Contagem de linhas por tabela | [fig06_contagem.png](prints/fig06_contagem.png) |
+| 7. Agenda dos próximos 30 dias (consulta 01) | [fig07_agenda.png](prints/fig07_agenda.png) |
+| 8. Retornos pendentes (consulta 02) | [fig08_retornos_pendentes.png](prints/fig08_retornos_pendentes.png) |
+| 9. Margem por unidade e mês (consulta 03) | [fig09_margem_unidade.png](prints/fig09_margem_unidade.png) |
+| 10. Faturamento por procedimento (consulta 04) | [fig10_fat_procedimento.png](prints/fig10_fat_procedimento.png) |
+| 11. Taxa de comparecimento (consulta 07) | [fig11_comparecimento.png](prints/fig11_comparecimento.png) |
+| 12. Estoque atual (consulta 08) | [fig12_estoque.png](prints/fig12_estoque.png) |
+
+## 8. Views
 
 | View | Para que serve |
 |---|---|
@@ -414,70 +456,3 @@ diagrama para não poluir.)
 **Custo de locação (SUPOSIÇÃO, NÃO confirmada pela cliente):**
 `valor_locacao` da unidade x dias distintos com atendimento Realizado no mês.
 Para trocar a regra, mude apenas a coluna `custo_locacao` de `vw_dash_unidade`.
-
----
-
-## 7. Dados de exemplo (população fictícia)
-
-Gerada por `popular_gerar.py` (semente fixa) em `zenith_populacao.sql`; conferida
-por `popular_validar.py`.
-
-| Tabela | Linhas |
-|---|---|
-| unidade | 3 |
-| profissional | 1 |
-| usuario | 0 (criados por `python criar_usuario.py`) |
-| paciente | 126 |
-| anamnese | 80 |
-| procedimento | 7 |
-| fornecedor | 4 |
-| insumo | 22 |
-| procedimento_insumo | 36 |
-| atendimento | 314 |
-| atendimento_procedimento | 383 |
-| compra | 146 |
-| consumo | 1.432 |
-| lancamento | 89 |
-
-**Agenda futura:** 64 atendimentos Agendado em 15 dias úteis, de 19/10/2026 a
-09/11/2026, sem sábados, domingos e o feriado de 02/11/2026. São de 2 a 5 por dia,
-exceto 19/10, que tem 7 vindos da carga original. Status Agendado, valor cobrado
-igual ao preço de tabela, sem desconto, sem forma de pagamento e sem consumo.
-
-## 8. Perguntas abertas para a Dra. Gabriela
-
-1. A clínica compra o mesmo insumo de vários fornecedores, ou cada insumo vem
-   sempre do mesmo? (O modelo aceita os dois casos.)
-2. O consumo de insumo por procedimento varia por paciente ou por região
-   aplicada? Os valores padrão cadastrados no sistema estão próximos do real?
-3. Como é cobrado o aluguel de cada sala: por dia de uso, por período (turno),
-   valor fixo mensal ou percentual do faturamento? Quais são os valores?
-4. Quais são os preços de tabela e os intervalos de retorno corretos de cada
-   procedimento?
-5. Quem deve ter acesso a quê no sistema (Gerente, Atendente, Profissional)?
-
----
-
-## 9. Backup antes de recriar o banco
-
-O `zenith_banco.sql` v2 começa com `DROP DATABASE IF EXISTS zenith`. Antes de
-executá-lo, faça o backup em um Prompt de Comando. Use o caminho do seu MySQL
-Server se for outra versão:
-
-```
-cd "C:\Program Files\MySQL\MySQL Server 8.0\bin"
-mysqldump -u root -p --routines --triggers --databases zenith > "%USERPROFILE%\Documents\zenith_backup_AAAA-MM-DD.sql"
-```
-
-O mysqldump pede a senha do root. Digite-a no prompt, nunca na linha de comando.
-Para restaurar, se precisar:
-
-```
-mysql -u root -p < "%USERPROFILE%\Documents\zenith_backup_AAAA-MM-DD.sql"
-```
-
-Ordem completa:
-1. Backup (acima).
-2. No Workbench, como root: abrir e executar `zenith_banco.sql`.
-3. Executar o bloco de GRANTs da seção 6 do script (descomentado).
-4. Executar `zenith_populacao.sql` (gerado na Fase 2).
