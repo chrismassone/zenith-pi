@@ -21,6 +21,34 @@ refeito no Power BI. As views já aplicam as regras:
    Não use o root e não grave a senha em nenhum arquivo do projeto.
 4. Selecione apenas as views `vw_*` listadas abaixo.
 
+### Banco na nuvem (TiDB Cloud)
+
+Com o banco no TiDB Cloud (ver README), o Power BI lê as mesmas views pela
+internet, sem MySQL instalado.
+
+1. Instale o **MySQL Connector/NET** (Oracle), exigido pelo conector MySQL do
+   Power BI Desktop. Para conferir no PowerShell:
+   `[System.Data.Common.DbProviderFactories]::GetFactoryClasses() | ogv` deve
+   listar "MySQL Data Provider".
+2. Power BI Desktop > Obter dados > Banco de dados MySQL.
+3. Servidor `<host do cluster>:4000` (botão **Connect** do console), banco `zenith`.
+4. Credenciais em **Banco de dados**: `PREFIXO.zenith_bi` e a senha dele
+   (somente leitura, criado por `banco/tidb/permissoes_tidb.sql`). A conexão
+   pública do TiDB Cloud é sempre criptografada (TLS); não desmarque a opção
+   de conexão criptografada.
+5. Se o cluster tiver lista de IPs permitidos, inclua o IP da máquina.
+
+Diferenças em relação ao MySQL local:
+- as views do TiDB calculam "hoje" no horário de Brasília
+  (`CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')`), então retornos vencidos
+  e alertas de validade batem com o aplicativo, qualquer que seja o fuso da
+  conexão do Power BI;
+- **atualização agendada no Power BI Service**: segundo a documentação da
+  Microsoft, servidores MySQL na nuvem não exigem gateway
+  ([conector MySQL](https://learn.microsoft.com/en-us/power-query/connectors/mysql-database)).
+  Isso não foi testado com o TiDB; se a atualização falhar no Service, a
+  alternativa é um gateway em modo padrão numa máquina com o Connector/NET.
+
 ## Relacionamentos sugeridos no modelo do Power BI
 
 - Tabela de calendário (Power BI) `ano_mes` -> `ano_mes` das views mensais.

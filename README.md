@@ -43,6 +43,32 @@ mysqldump -u root -p --routines --triggers --databases zenith > zenith_backup.sq
 2. Em `banco/permissoes.sql`, troque `TROQUE_ESTA_SENHA` pelas senhas de
    `zenith_app` (a mesma do `.env`) e `zenith_bi` (Power BI) e execute como root.
 
+## Banco na nuvem (TiDB Cloud)
+
+Com o banco no TiDB Cloud, o aplicativo e o Power BI funcionam de qualquer
+lugar, sem o MySQL instalado. Os scripts ficam em `banco/tidb/`: são os mesmos
+dados e as mesmas views, mas sem os gatilhos (a regra do saldo fica no
+aplicativo) e com a data de Brasília.
+
+1. Em [tidbcloud.com](https://tidbcloud.com), crie um cluster **Starter** na
+   região mais próxima (São Paulo, se houver).
+2. No botão **Connect** do cluster, anote host, porta (4000) e o prefixo do
+   usuário (ex.: `3xYz.root`), e baixe o certificado CA (`isrgrootx1.pem`).
+   Guarde o certificado fora do repositório.
+3. Rode `banco/tidb/zenith_completo_tidb.sql` com o usuário administrador, pelo
+   **SQL Editor** do console ou pelo MySQL Workbench (porta 4000, aba SSL com
+   *Use SSL: Require and Verify Identity* e o arquivo CA). A conferência no
+   fim deve mostrar `check_ligado = 1`, 14 tabelas e 12 views.
+4. Em `banco/tidb/permissoes_tidb.sql`, troque `PREFIXO` pelo prefixo do
+   cluster e `TROQUE_ESTA_SENHA` pelas senhas, direto no editor (não salve o
+   arquivo com as senhas), e execute.
+5. No `.env`, use o bloco do TiDB do `.env.example`: host e porta do cluster,
+   `DB_USER=PREFIXO.zenith_app`, `DB_SSL=on` e `DB_SSL_CA` com o caminho do
+   certificado.
+6. Rode `python -m testes.teste_conexao` para conferir.
+
+Para voltar ao MySQL local basta usar de novo o bloco local no `.env`.
+
 ## Usuários do sistema
 
 O script do banco não cria usuários. Para criar o primeiro Gerente:
