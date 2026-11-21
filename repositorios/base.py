@@ -8,7 +8,7 @@ from database.conexao import conectar
 ERRO_DUPLICADO = 1062
 ERRO_FK = 1452
 ERRO_CHECK = 3819
-SINAL_GATILHO = "45000"  # SIGNAL dos gatilhos de saldo
+SINAL_GATILHO = "45000"  # SIGNAL dos gatilhos de saldo (só no MySQL)
 
 
 class RegistroDuplicado(Exception):

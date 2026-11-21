@@ -185,9 +185,25 @@ def main():
         n = cur.fetchone()[0]
         ok(n > 0, f"{texto}: {n}")
 
-    print("\n== Gatilho de saldo no banco ==")
     cur.execute("SELECT id_insumo, saldo FROM vw_estoque_atual ORDER BY id_insumo LIMIT 1")
     id_ins, saldo = cur.fetchone()
+    cur.execute("SELECT COUNT(*) FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE()")
+    if not cur.fetchone()[0]:
+        # TiDB: sem gatilhos, a regra fica no repositório (testes.teste_saldo_concorrente)
+        from repositorios.base import RegraDoBanco
+        from repositorios.estoque import travar_saldo
+        print("\n== Regra de saldo no aplicativo (banco sem gatilhos) ==")
+        try:
+            travar_saldo(conn.cursor(dictionary=True), [(id_ins, saldo + 1)])
+            ok(False, "Consumo acima do saldo foi ACEITO pelo repositório")
+        except RegraDoBanco:
+            ok(True, "Consumo acima do saldo recusado pelo repositório")
+        conn.rollback()
+        conn.close()
+        print(f"\n{'Tudo certo.' if not falhas else f'{falhas} verificação(ões) falharam.'}")
+        return falhas
+
+    print("\n== Gatilho de saldo no banco ==")
     try:
         cur.execute("INSERT INTO consumo (id_insumo, quantidade, observacao) VALUES (%s, %s, %s)",
                     (id_ins, saldo + 1, "Teste automatico do gatilho"))

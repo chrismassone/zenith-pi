@@ -1,4 +1,4 @@
-from repositorios.base import consultar, executar
+from repositorios.base import RegraDoBanco, consultar, executar, transacao
 
 
 def estoque(busca="", so_alertas=False, incluir_inativos=False):
@@ -67,8 +67,33 @@ def listar_consumos(busca="", limite=300):
                      par + [limite])
 
 
+def travar_saldo(cur, consumos):
+    """Trava os insumos e confere o saldo dentro da transação.
+
+    Faz o papel dos gatilhos do MySQL (o TiDB não tem gatilhos): dois
+    consumos simultâneos do mesmo insumo esperam um pelo outro.
+    """
+    total = {}
+    for id_insumo, qtd in consumos:
+        total[id_insumo] = total.get(id_insumo, 0) + qtd
+    for id_insumo in sorted(total):  # ordem fixa evita impasse entre transações
+        cur.execute("SELECT id_insumo FROM insumo WHERE id_insumo = %s FOR UPDATE", (id_insumo,))
+        cur.fetchall()
+        # FOR UPDATE também nas somas: no TiDB a leitura comum vê a foto do início
+        # da transação e não enxergaria o consumo que acabou de ser gravado
+        cur.execute("SELECT COALESCE(SUM(quantidade), 0) AS q FROM compra "
+                    "WHERE id_insumo = %s FOR UPDATE", (id_insumo,))
+        comprado = cur.fetchone()["q"]
+        cur.execute("SELECT COALESCE(SUM(quantidade), 0) AS q FROM consumo "
+                    "WHERE id_insumo = %s FOR UPDATE", (id_insumo,))
+        if total[id_insumo] > comprado - cur.fetchone()["q"]:
+            raise RegraDoBanco("Saldo insuficiente do insumo para este consumo.")
+
+
 def inserir_consumo_avulso(id_insumo, quantidade, quando, observacao):
-    novo_id, _ = executar(
-        """INSERT INTO consumo (id_insumo, id_atendimento, quantidade, data_consumo, observacao)
-           VALUES (%s, NULL, %s, %s, %s)""", (id_insumo, quantidade, quando, observacao))
-    return novo_id
+    with transacao() as cur:
+        travar_saldo(cur, [(id_insumo, quantidade)])
+        cur.execute(
+            """INSERT INTO consumo (id_insumo, id_atendimento, quantidade, data_consumo, observacao)
+               VALUES (%s, NULL, %s, %s, %s)""", (id_insumo, quantidade, quando, observacao))
+        return cur.lastrowid

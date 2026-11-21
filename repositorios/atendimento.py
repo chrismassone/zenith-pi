@@ -1,4 +1,5 @@
 from repositorios.base import consultar, transacao
+from repositorios.estoque import travar_saldo
 
 
 def listar(busca="", id_unidade=None, status=None, data_ini=None, data_fim=None,
@@ -99,6 +100,7 @@ def salvar(id_atendimento, d, itens, consumos=()):
                            VALUES (%s, %s, %s, %s, %s)""",
                         (id_atendimento, it["id_procedimento"], it["quantidade_aplicada"],
                          it["regiao_aplicada"], it["valor_cobrado"]))
+        travar_saldo(cur, consumos)
         for id_insumo, qtd in consumos:
             cur.execute("""INSERT INTO consumo (id_insumo, id_atendimento, quantidade,
                                                 data_consumo)

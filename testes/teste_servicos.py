@@ -151,14 +151,17 @@ try:
     caso("Consumo acima do saldo bloqueado no serviço", isinstance(e, SaldoInsuficiente), True)
     caso("Nada gravado quando o saldo falta",
          consultar("SELECT COUNT(*) n FROM atendimento", um=True)["n"], n_antes)
-    try:
-        with transacao() as cur:
-            cur.execute("INSERT INTO consumo (id_insumo, quantidade, observacao) VALUES (%s,%s,%s)",
-                        (mili, saldo(mili) + 1, "teste"))
-        bloqueou = False
-    except Exception:  # noqa: BLE001
-        bloqueou = True
-    caso("Banco também bloqueia (gatilho)", bloqueou, True)
+    # o TiDB não tem gatilhos; lá quem bloqueia é o repositório (teste_saldo_concorrente)
+    if consultar("SELECT COUNT(*) n FROM information_schema.TRIGGERS "
+                 "WHERE TRIGGER_SCHEMA = DATABASE()", um=True)["n"]:
+        try:
+            with transacao() as cur:
+                cur.execute("INSERT INTO consumo (id_insumo, quantidade, observacao) "
+                            "VALUES (%s,%s,%s)", (mili, saldo(mili) + 1, "teste"))
+            bloqueou = False
+        except Exception:  # noqa: BLE001
+            bloqueou = True
+        caso("Banco também bloqueia (gatilho)", bloqueou, True)
 
     # consumo avulso
     caso("Consumo avulso sem motivo recusado",
